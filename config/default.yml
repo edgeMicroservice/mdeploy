@@ -1,0 +1,12 @@
+name: mimik
+api:
+  name: mdeploy
+  controllerPath: ../src/controllers
+  outputPath: ./build
+  securityHandlerPath: ../src/securityHandlers
+  swagger: node_modules/swagger-mdeploy/mdeploy-api-swagger.yml
+  
+package:
+  imageName: mdeploy
+  imageIndexFilePath: ./build/index.js
+  outputFolder: ./deploy
