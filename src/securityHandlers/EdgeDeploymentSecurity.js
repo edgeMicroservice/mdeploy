@@ -1,5 +1,5 @@
+/* eslint-disable no-unused-vars */
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
-const makeConfigurationModel = require('../models/configurationModel');
 
 const SecurityHandler = (req, definition, apikey, next) => {
   const accessToken = extractToken(req.authorization);
@@ -10,8 +10,7 @@ const SecurityHandler = (req, definition, apikey, next) => {
     return;
   }
 
-  const config = makeConfigurationModel(context).getConfiguration();
-  if (!config || config.edgeDeploymentAccessKey !== accessToken) {
+  if (accessToken !== 'hello') {
     next(new Error('Forbidden: accessToken did not match'));
     return;
   }

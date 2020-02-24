@@ -1,14 +1,18 @@
-const makeConfigurationModel = require('../models/configurationModel');
+const makeClientModel = require('../models/clientModel');
 const makeNodeModel = require('../models/nodeModel');
 const { decodePayload } = require('../lib/jwtHelper');
 
 const makeNodeProcessor = (context) => {
+  const clientModel = makeClientModel(context);
+
   const getNodes = (security, params) => {
     let edgeAccessToken;
     if (security.type === 'EdgeDeploymentSecurity') {
-      const config = makeConfigurationModel(context).getConfiguration();
-      if (!config || !config.edgeAccessToken) throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
-      edgeAccessToken = config.edgeAccessToken;
+      try {
+        edgeAccessToken = clientModel.getClientToken();
+      } catch (err) {
+        console.log('cannot find edgeAccessToken in the configuration');
+      }
     } else {
       edgeAccessToken = security.accessToken;
     }

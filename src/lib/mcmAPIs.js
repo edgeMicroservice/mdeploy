@@ -1,23 +1,21 @@
 const Q = require('q');
 
-const makeConfigurationModel = require('../models/configurationModel');
+const makeClientModel = require('../models/clientModel');
 
-const serverUrl = '127.0.0.1:8083/mcm/v1';
+const MCM_URL = '127.0.0.1:8083/mcm/v1';
 
 const makeMcmAPIs = (context) => {
   const { http } = context;
+  const clientModel = makeClientModel(context);
 
   const getCachedImages = () => {
+    const accessToken = clientModel.getClientToken();
     const deferred = Q.defer();
-    const config = makeConfigurationModel(context).getConfiguration();
-    if (!config || !config.edgeAccessToken) {
-      throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
-    }
 
     http.request(({
-      url: `${serverUrl}/images`,
+      url: `${MCM_URL}/images`,
       type: 'GET',
-      authorization: `bearer ${config.edgeAccessToken}`,
+      authorization: `bearer ${accessToken}`,
       success: (result) => {
         deferred.resolve(JSON.parse(result.data).data);
       },
@@ -30,15 +28,12 @@ const makeMcmAPIs = (context) => {
 
   const deleteCachedImage = (id) => {
     const deferred = Q.defer();
-    const config = makeConfigurationModel(context).getConfiguration();
-    if (!config || !config.edgeAccessToken) {
-      throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
-    }
+    const accessToken = clientModel.getClientToken();
 
     http.request(({
-      url: `${serverUrl}/images/${id}`,
+      url: `${MCM_URL}/images/${id}`,
       type: 'DELETE',
-      authorization: `bearer ${config.edgeAccessToken}`,
+      authorization: `bearer ${accessToken}`,
       success: () => {
         deferred.resolve(id);
       },
@@ -50,21 +45,18 @@ const makeMcmAPIs = (context) => {
   };
 
   const deployContainer = (imageName, containerName, env) => {
+    const accessToken = clientModel.getClientToken();
     const deferred = Q.defer();
-    const config = makeConfigurationModel(context).getConfiguration();
-    if (!config || !config.edgeAccessToken) throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
-
-    const data = {
-      name: containerName,
-      image: imageName,
-      env,
-    };
 
     http.request(({
-      url: `${serverUrl}/containers`,
+      url: `${MCM_URL}/containers`,
       type: 'POST',
-      authorization: `bearer ${config.edgeAccessToken}`,
-      data: JSON.stringify(data),
+      authorization: `bearer ${accessToken}`,
+      data: JSON.stringify({
+        name: containerName,
+        image: imageName,
+        env,
+      }),
       success: (result) => {
         deferred.resolve(JSON.parse(result.data));
       },
@@ -76,15 +68,13 @@ const makeMcmAPIs = (context) => {
   };
 
   const undeployContainer = (containerId) => {
-    console.log('===> containerId', containerId);
+    const accessToken = clientModel.getClientToken();
     const deferred = Q.defer();
-    const config = makeConfigurationModel(context).getConfiguration();
-    if (!config || !config.edgeAccessToken) throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
 
     http.request(({
-      url: `${serverUrl}/containers/${containerId}`,
+      url: `${MCM_URL}/containers/${containerId}`,
       type: 'DELETE',
-      authorization: `bearer ${config.edgeAccessToken}`,
+      authorization: `bearer ${accessToken}`,
       success: (result) => {
         deferred.resolve(JSON.parse(result.data));
         console.log('===> result', result);
@@ -98,16 +88,13 @@ const makeMcmAPIs = (context) => {
   };
 
   const getDeployedContainers = () => {
+    const accessToken = clientModel.getClientToken();
     const deferred = Q.defer();
-    const config = makeConfigurationModel(context).getConfiguration();
-    if (!config || !config.edgeAccessToken) {
-      throw new Error('could not fetch edgeAccessToken. service needs to configured by the system endpoints');
-    }
 
     http.request(({
-      url: `${serverUrl}/containers`,
+      url: `${MCM_URL}/containers`,
       type: 'GET',
-      authorization: `bearer ${config.edgeAccessToken}`,
+      authorization: `bearer ${accessToken}`,
       success: (result) => {
         deferred.resolve(JSON.parse(result.data).data);
       },
