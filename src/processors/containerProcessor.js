@@ -1,28 +1,23 @@
-/* eslint-disable arrow-body-style */
-/* eslint-disable no-unused-vars */
-const Q = require('q');
-const find = require('lodash/find');
-
 const makeMcmAPIs = require('../lib/mcmAPIs');
+const makeTokenSelector = require('../lib/tokenSelector');
+
+const fetchToken = (context) => makeTokenSelector(context)
+  .selectUserToken();
 
 const makeContainerProcessor = (context) => {
-  const getContainers = () => {
-    const { getDeployedContainers } = makeMcmAPIs(context);
+  const getContainers = () => fetchToken()
+    .then((accessToken) => makeMcmAPIs(context)
+      .getDeployedContainers(accessToken));
 
-    return getDeployedContainers();
-  };
+  const postContainer = (containerRequest) => fetchToken()
+    .then((accessToken) => makeMcmAPIs(context)
+      .deployContainer(
+        containerRequest.imageName, containerRequest.name, containerRequest.env, accessToken,
+      ));
 
-  const postContainer = (containerRequest) => {
-    const { deployContainer } = makeMcmAPIs(context);
-
-    return deployContainer(containerRequest.imageName, containerRequest.name, containerRequest.env);
-  };
-
-  const deleteContainer = (containerId) => {
-    const { undeployContainer } = makeMcmAPIs(context);
-
-    return undeployContainer(containerId);
-  };
+  const deleteContainer = (containerId) => fetchToken()
+    .then((accessToken) => makeMcmAPIs(context)
+      .undeployContainer(containerId, accessToken));
 
   return {
     getContainers,

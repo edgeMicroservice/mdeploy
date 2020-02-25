@@ -1,5 +1,3 @@
-/* eslint-disable arrow-body-style */
-/* eslint-disable no-unused-vars */
 const Q = require('q');
 const find = require('lodash/find');
 

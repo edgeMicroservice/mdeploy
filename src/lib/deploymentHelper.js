@@ -1,10 +1,7 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable arrow-body-style */
 const makeRequestPromisifier = require('../lib/requestPromisifier');
 
-const SERVER_ADDRESS = 'http://127.0.0.1:8083';
-const JSONRPC_URL = `${SERVER_ADDRESS}/jsonrpc/v1`;
-const MCM_URL = `${SERVER_ADDRESS}/mcm/v1`;
+const JSONRPC_URL = 'http://127.0.0.1:8083/jsonrpc/v1';
+const MCM_URL = 'http://127.0.0.1:8083/mcm/v1';
 
 const HMAC_EXPIRES_IN = 60; // in seconds
 
@@ -59,9 +56,7 @@ const makeDeploymentHelper = (context) => {
         };
         return makeRequestPromisifier(context)
           .request(options)
-          .then((result) => {
-            return JSON.parse(result.data);
-          });
+          .then((result) => JSON.parse(result.data));
       });
   };
 
