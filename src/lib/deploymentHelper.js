@@ -1,8 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable arrow-body-style */
-const Q = require('q');
-
-const makeClientModel = require('../models/clientModel');
+const makeRequestPromisifier = require('../lib/requestPromisifier');
 
 const SERVER_ADDRESS = 'http://127.0.0.1:8083';
 const JSONRPC_URL = `${SERVER_ADDRESS}/jsonrpc/v1`;
@@ -11,15 +9,8 @@ const MCM_URL = `${SERVER_ADDRESS}/mcm/v1`;
 const HMAC_EXPIRES_IN = 60; // in seconds
 
 const makeDeploymentHelper = (context) => {
-  const clientModel = makeClientModel(context);
-
-  const generateHmac = (nodeId, nodeUrl, imageId) => {
-    const accessToken = clientModel.getClientToken();
-
-    const { http } = context;
-    const deferred = Q.defer();
-
-    http.request(({
+  const generateHmac = (nodeId, imageId, accessToken) => {
+    const options = {
       url: JSONRPC_URL,
       type: 'POST',
       authorization: `bearer ${accessToken}`,
@@ -33,29 +24,23 @@ const makeDeploymentHelper = (context) => {
           `/mcm/v1/images/${imageId}/tarball`,
         ],
       }),
-      success: (result) => {
+    };
+    return makeRequestPromisifier(context)
+      .request(options)
+      .then((result) => {
         const response = JSON.parse(result.data);
-        console.log('===> response', response);
-        if (response.error) deferred.reject(new Error(response.error));
-        else deferred.resolve(response.result.edgeHmacCode);
-      },
-      error: (err) => {
-        console.log('===> err', err);
-        deferred.reject(new Error(err));
-      },
-    }));
-    return deferred.promise;
+        if (response.error) throw new Error(response.error);
+        return response.result.edgeHmacCode;
+      });
   };
 
-  const deployService = (nodeId, nodeUrl, imageId) => {
-    const { http, env } = context;
+  const deployService = (nodeId, nodeUrl, imageId, accessToken) => {
+    const { env } = context;
 
-    return generateHmac(nodeId, nodeUrl, imageId)
+    return generateHmac(nodeId, imageId, accessToken)
       .fail((err) => { throw new Error(`Error occured while generating hmac: ${JSON.stringify(err)}`); })
       .then((hmac) => {
-        const accessToken = clientModel.getClientToken();
-        const deferred = Q.defer();
-        http.request(({
+        const options = {
           url: env.MDEPLOYMENYAGENT_URL,
           type: 'POST',
           data: JSON.stringify({
@@ -71,14 +56,12 @@ const makeDeploymentHelper = (context) => {
               },
             },
           }),
-          success: (result) => {
-            deferred.resolve(result);
-          },
-          error: (err) => {
-            deferred.reject(new Error(err.message));
-          },
-        }));
-        return deferred.promise;
+        };
+        return makeRequestPromisifier(context)
+          .request(options)
+          .then((result) => {
+            return JSON.parse(result.data);
+          });
       });
   };
 
