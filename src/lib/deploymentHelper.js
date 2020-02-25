@@ -31,7 +31,7 @@ const makeDeploymentHelper = (context) => {
       });
   };
 
-  const deployService = (nodeId, nodeUrl, imageId, accessToken) => {
+  const deployImage = (nodeId, nodeUrl, imageId, accessToken) => {
     const { env } = context;
 
     return generateHmac(nodeId, imageId, accessToken)
@@ -61,7 +61,7 @@ const makeDeploymentHelper = (context) => {
   };
 
   return {
-    deployService,
+    deployImage,
   };
 };
 

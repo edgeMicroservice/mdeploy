@@ -1,6 +1,3 @@
-/* eslint-disable no-unused-vars */
-const util = require('util');
-
 const response = require('@mimik/edge-ms-helper/response-helper');
 
 const makeClientProcessor = require('../processors/clientProcessor');
@@ -13,7 +10,7 @@ const updateClientStatus = (req, res) => {
 
   makeClientProcessor(context)
     .updateClientStatus(status, jwt, expiresIn)
-    .then((result) => {
+    .then(() => {
       const responseObj = status === 'active' ? {
         status: 'active',
         inactiveAfter: payload.exp,

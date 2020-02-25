@@ -1,16 +1,9 @@
-/* eslint-disable arrow-body-style */
-/* eslint-disable no-unused-vars */
-const util = require('util');
-const find = require('lodash/find');
-
 const response = require('@mimik/edge-ms-helper/response-helper');
 
 const makeImageProcessor = require('../processors/imageProcessor');
 
 const postImage = (req, res) => {
   const { context, swagger } = req;
-
-  console.log('===> here');
 
   makeImageProcessor(context)
     .postImage(swagger.params.newImage)
