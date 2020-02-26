@@ -82,11 +82,13 @@ const validate = (token, pubkey, scopes) => {
     throw new Error('missing scopes');
   }
 
-  const hasScope = scopes.reduce((acc, s) => acc
-    || (payload.scope.toString().indexOf(s) !== -1), false);
+  if (scopes) {
+    const hasScope = scopes.reduce((acc, s) => acc
+      || (payload.scope.toString().indexOf(s) !== -1), false);
 
-  if (!hasScope) {
-    throw new Error('does not have required scope');
+    if (!hasScope) {
+      throw new Error('does not have required scope');
+    }
   }
 };
 

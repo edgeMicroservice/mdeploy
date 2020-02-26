@@ -3,7 +3,6 @@ const { validate } = require('../lib/oauthHelper');
 const { decodePayload } = require('../lib/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
-  console.log('===> in system security');
   const { EAUTH_SYSTEM_PUBLIC_KEY, OAUTH_SYSTEM_PUBLIC_KEY } = req.context.env;
   if (!req.authorization) {
     next(new Error('authorization header is needed'));
@@ -38,8 +37,7 @@ const SecurityHandler = (req, definition, scopes, next) => {
     }
   } else {
     try {
-      console.log('===> scopes', scopes);
-      validate(token, EAUTH_SYSTEM_PUBLIC_KEY, scopes);
+      validate(token, EAUTH_SYSTEM_PUBLIC_KEY);
       req.context.security = {
         type: 'SystemSecurity',
         issuer: 'MES',

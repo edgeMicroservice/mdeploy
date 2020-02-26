@@ -25,7 +25,6 @@ const SecurityHandler = (req, definition, scopes, next) => {
       next();
     }
   } catch (e) {
-    console.log('===> rejecting user security');
     next(new Error(`invalid token: ${e.message}`));
   }
 };

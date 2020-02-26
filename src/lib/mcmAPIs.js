@@ -1,59 +1,47 @@
-const makeRequestPromisifier = require('../lib/requestPromisifier');
+const { rpAuth } = require('../lib/edgeCrypt');
 
 const MCM_URL = '127.0.0.1:8083/mcm/v1';
 
 const makeMcmAPIs = (context) => {
-  const getCachedImages = (accessToken) => makeRequestPromisifier(context)
-    .request({
-      url: `${MCM_URL}/images`,
-      type: 'GET',
-      authorization: `bearer ${accessToken}`,
-    })
-    .then((result) => JSON.parse(result.data).data)
-    .fail((err) => new Error(err.message));
+  const getCachedImages = (accessToken) => rpAuth('MCM', {
+    url: `${MCM_URL}/images`,
+    method: 'GET',
+    token: `bearer ${accessToken}`,
+  }, context, true)
+    .then((result) => result.data);
 
-  const deleteCachedImage = (id, accessToken) => makeRequestPromisifier(context)
-    .request({
-      url: `${MCM_URL}/images/${id}`,
-      type: 'DELETE',
-      authorization: `bearer ${accessToken}`,
-    })
-    .then(() => id)
-    .fail((err) => new Error(err.message));
+  const deleteCachedImage = (id, accessToken) => rpAuth('MCM', {
+    url: `${MCM_URL}/images/${id}`,
+    method: 'DELETE',
+    token: `bearer ${accessToken}`,
+  }, context, true)
+    .then(() => id);
 
   const deployContainer = (
     imageName, containerName, env, accessToken,
-  ) => makeRequestPromisifier(context)
-    .request({
-      url: `${MCM_URL}/containers`,
-      type: 'POST',
-      authorization: `bearer ${accessToken}`,
-      data: JSON.stringify({
-        name: containerName,
-        image: imageName,
-        env,
-      }),
-    })
-    .then((result) => JSON.parse(result.data))
-    .fail((err) => new Error(err.message));
+  ) => rpAuth('MCM', {
+    url: `${MCM_URL}/containers`,
+    method: 'POST',
+    token: `bearer ${accessToken}`,
+    body: {
+      name: containerName,
+      image: imageName,
+      env,
+    },
+  }, context, true);
 
-  const undeployContainer = (containerId, accessToken) => makeRequestPromisifier(context)
-    .request({
-      url: `${MCM_URL}/containers/${containerId}`,
-      type: 'DELETE',
-      authorization: `bearer ${accessToken}`,
-    })
-    .then((result) => JSON.parse(result.data))
-    .fail((err) => new Error(err.message));
+  const undeployContainer = (containerId, accessToken) => rpAuth('MCM', {
+    url: `${MCM_URL}/containers/${containerId}`,
+    method: 'DELETE',
+    token: `bearer ${accessToken}`,
+  }, context, true);
 
-  const getDeployedContainers = (accessToken) => makeRequestPromisifier(context)
-    .request({
-      url: `${MCM_URL}/containers`,
-      type: 'GET',
-      authorization: `bearer ${accessToken}`,
-    })
-    .then((result) => JSON.parse(result.data).data)
-    .fail((err) => new Error(err.message));
+  const getDeployedContainers = (accessToken) => rpAuth('MCM', {
+    url: `${MCM_URL}/containers`,
+    method: 'GET',
+    token: `bearer ${accessToken}`,
+  }, context, true)
+    .then((result) => result.data);
 
   return {
     getCachedImages,
