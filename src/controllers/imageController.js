@@ -18,8 +18,6 @@ const postImage = (req, res) => {
 const getImages = (req, res) => {
   const { context } = req;
 
-  console.log('===> in image controller');
-
   makeImageProcessor(context)
     .getImages()
     .then((data) => response.sendResult({ data }, 200, res))

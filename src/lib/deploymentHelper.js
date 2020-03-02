@@ -1,4 +1,4 @@
-const { rpAuth } = require('../lib/edgeCrypt');
+const { rpAuth } = require('../lib/edgeAuth');
 
 const JSONRPC_URL = 'http://127.0.0.1:8083/jsonrpc/v1';
 const MCM_URL = 'http://127.0.0.1:8083/mcm/v1';

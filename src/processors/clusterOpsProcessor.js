@@ -1,13 +1,13 @@
 const Q = require('q');
 const find = require('lodash/find');
+const merge = require('lodash/merge');
 
-const { rpAuth } = require('../lib/edgeCrypt');
+const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/edgeAuth');
 const makeNodesHelper = require('../lib/nodesHelper');
 
 const makeClusterOpsProcessor = (context) => {
-  const createOperationRequest = (nodeId, serviceType, url, request) => {
+  const createOperationRequest = (nodeId, serviceType, request, accessToken) => {
     const requestOptions = {
-      url: `${url}${request.endpoint}`,
       method: request.method,
     };
     if (request.qs) requestOptions.qs = request.qs;
@@ -15,43 +15,42 @@ const makeClusterOpsProcessor = (context) => {
     if (request.token) requestOptions.token = request.token;
     if (request.headers) requestOptions.headers = request.headers;
 
-    return rpAuth(serviceType, requestOptions, context, true)
-      .then((result) => ({
-        nodeId,
-        serviceType,
-        responseType: 'success',
-        responseBody: result,
-      }))
-      .fail((err) => {
-        delete requestOptions.token;
-        if (requestOptions.headers && requestOptions.headers.Authorization) {
-          delete requestOptions.headers.Authorization;
-        }
+    return getEdgeServiceLinkByNodeId(nodeId, serviceType, accessToken, context)
+      .then((serviceLink) => {
+        const updatedRequestOptions = merge(requestOptions, serviceLink);
+        updatedRequestOptions.url = `${updatedRequestOptions.url}${request.endpoint}`;
 
-        return {
-          nodeId,
-          serviceType,
-          responseType: 'success',
-          responseBody: err,
-          requestOptions,
-        };
+        const outputOptions = updatedRequestOptions;
+        outputOptions.token = undefined;
+        if (outputOptions.headers && outputOptions.headers.Authorization) {
+          outputOptions.headers.Authorization = undefined;
+        }
+        return rpAuth(serviceType, updatedRequestOptions, context, true)
+          .then((result) => ({
+            nodeId,
+            serviceType,
+            responseType: 'success',
+            responseBody: result,
+            requestOptions: outputOptions,
+          }))
+          .fail((err) => ({
+            nodeId,
+            serviceType,
+            responseType: 'failure',
+            responseBody: err,
+            requestOptions: outputOptions,
+          }));
       });
   };
 
   const createClusterOp = (clusterOp, accessToken) => makeNodesHelper(context)
     .findByAccount(accessToken)
     .then((nodes) => {
-      const { serviceType, apiRoot } = context.info;
+      const { serviceType } = context.info;
       const operationsPromises = clusterOp.nodes.map((id) => {
         const selectedNode = find(nodes, (node) => node.id === id);
         if (!selectedNode) throw new Error(`cannot create cluster operation. node with id: ${id} cannot be found`);
-        const selectedService = find(
-          selectedNode.services, (service) => service.serviceType === serviceType,
-        );
-        if (!selectedService) throw new Error(`cannot create cluster operation. serviceType: ${serviceType} cannot be found, on nodeId: ${id}`);
-        const nodeAddress = find(selectedNode.addresses, (address) => address.type === 'local'); // TODO add support for non local
-        const serviceAddress = `${nodeAddress.url.href}${selectedService.self ? selectedService.self : apiRoot}`;
-        return createOperationRequest(id, serviceType, serviceAddress, clusterOp.request);
+        return createOperationRequest(id, serviceType, clusterOp.request, accessToken);
       });
       return Q.all(operationsPromises);
     });
