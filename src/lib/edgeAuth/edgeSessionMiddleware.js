@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-/* eslint-disable global-require */
 const querystring = require('query-string');
 
 const { decrypt } = require('./encryptionHelper');
@@ -35,10 +33,6 @@ const edgeSessionMiddleware = (req, res, next) => {
       req.authorization = options.token || options.headers.Authorization;
     }
     if (options.body) req.body = JSON.stringify(options.body);
-
-    const util = require('util');
-    console.log('===> options', Date.now(), '', util.inspect(options, false, null, true));
-    console.log('===> request after middleware processing', Date.now(), '', util.inspect(req, false, null, true));
 
     next();
   } else {

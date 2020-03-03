@@ -1,13 +1,9 @@
-/* eslint-disable global-require */
 const response = require('@mimik/edge-ms-helper/response-helper');
 
 const makeImageProcessor = require('../processors/imageProcessor');
 
 const postImage = (req, res) => {
   const { context, swagger } = req;
-
-  const util = require('util');
-  console.log('===> ', Date.now(), 'context', util.inspect(context, false, null, true));
 
   makeImageProcessor(context)
     .postImage(swagger.params.newImage)

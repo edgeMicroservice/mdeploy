@@ -19,7 +19,6 @@ const makeRequestPromisifier = (context) => {
           message: err.message,
           status: err.status,
         } : JSON.parse(err.content);
-        console.log(errorContent.error ? errorContent.error : errorContent);
         const errorObject = errorContent.error ? errorContent.error : errorContent;
         if (errorObject.msg) errorObject.message = errorObject.msg;
         deferred.reject(errorObject);

@@ -3,7 +3,6 @@ const { validate } = require('../lib/oauthHelper');
 const { decodePayload } = require('../lib/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
-  console.log('===> in SystemSecurity');
   const { EAUTH_SYSTEM_PUBLIC_KEY, OAUTH_SYSTEM_PUBLIC_KEY } = req.context.env;
   if (!req.authorization) {
     next(new Error('authorization header is needed'));
@@ -37,7 +36,6 @@ const SecurityHandler = (req, definition, scopes, next) => {
       next(new Error(`invalid token: ${e.message}`));
     }
   } else {
-    console.log('===> in MES SystemSecurity');
     try {
       validate(token, EAUTH_SYSTEM_PUBLIC_KEY);
       req.context.security = {

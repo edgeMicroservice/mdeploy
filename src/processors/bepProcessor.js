@@ -3,7 +3,6 @@ const Q = require('q');
 const makeBepProcessor = (context) => {
   const getBep = (hmac) => {
     const deferred = Q.defer();
-    console.log('===> hmac', hmac);
     context.edge.requestBep({
       code: hmac,
       success: (result) => deferred.resolve({ href: result.data }),

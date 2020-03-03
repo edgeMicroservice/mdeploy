@@ -5,8 +5,6 @@ const makeBepProcessor = require('../processors/bepProcessor');
 const getBep = (req, res) => {
   const { context, swagger } = req;
 
-  console.log('===> in bepController, swagger', swagger);
-
   makeBepProcessor(context)
     .getBep(swagger.params.hmac)
     .then((data) => response.sendResult(data || {}, 200, res))

@@ -1,8 +1,6 @@
-/* eslint-disable no-unused-vars */
 const querystring = require('query-string');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
-const indexOf = require('lodash/indexOf');
 
 const makeRequestPromisifier = require('./requestPromisifier');
 const { findByServiceType } = require('./sessionMap');
@@ -27,11 +25,10 @@ const makeHeaders = (auth, maps) => {
 };
 
 // eslint-disable-next-line no-unused-vars
-const rpAuth = (serviceType, options, context, isTargetEdge) => {
+const rpAuth = (serviceType, options, context) => {
   const updatedOptions = options;
 
   if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
-    console.log('===> in MCM/x-mimik-routing with url', updatedOptions.url);
     let url = updatedOptions.url || updatedOptions.uri;
     const qs = querystring.stringify(updatedOptions.qs);
     if (updatedOptions.qs) url = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
@@ -41,7 +38,8 @@ const rpAuth = (serviceType, options, context, isTargetEdge) => {
       type: updatedOptions.method,
     };
     if (updatedOptions.body) requestOptions.data = updatedOptions.body;
-    // If mcm donot append token
+
+    // If mcm, donot append token
     if (!updatedOptions.token) updatedOptions.token = fetchToken();
     if (updatedOptions.token || (updatedOptions.headers && updatedOptions.headers.Authorization)) {
       requestOptions.authorization = updatedOptions.token || updatedOptions.headers.Authorization;
@@ -53,11 +51,9 @@ const rpAuth = (serviceType, options, context, isTargetEdge) => {
       delete additionalHeaders.Authorization;
       requestOptions.authorization = makeHeaders(requestOptions.authorization, additionalHeaders);
     }
-    console.log('===> requestOptions', requestOptions);
     return makeRequestPromisifier(context)
       .request(requestOptions);
   }
-  console.log('===> outside MCM/x-mimik-routing with url', updatedOptions.url);
   const keyMap = findByServiceType(serviceType);
   if (!keyMap) throw new Error(`could not find key for serviceType: ${serviceType}`);
 
@@ -80,10 +76,6 @@ const rpAuth = (serviceType, options, context, isTargetEdge) => {
   const qs = querystring.stringify(edgeSessionParams);
   const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
 
-  console.log('===> updatedOptions', {
-    url: urlWithParams,
-    type: updatedOptions.method,
-  });
   return makeRequestPromisifier(context)
     .request({
       url: urlWithParams,
