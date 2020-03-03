@@ -4,6 +4,7 @@ const makeMcmAPIs = require('../lib/mcmAPIs');
 const makeNodesHelper = require('../lib/nodesHelper');
 const makeDeploymentHelper = require('../lib/deploymentHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
+const makeBepHelper = require('../lib/bepHelper');
 
 const fetchToken = (context) => makeTokenSelector(context)
   .selectUserToken();
@@ -13,10 +14,21 @@ const makeImageProcessor = (context) => {
     .then((accessToken) => makeNodesHelper(context)
       .findByAccount(accessToken)
       .then((nodes) => {
-        const node = find(nodes, (currentNode) => currentNode.id === newImage.nodeId);
-        if (!node) throw new Error(`Node with id: ${newImage.nodeId} cannot be found`);
+        const targetNode = find(nodes, (node) => node.id === newImage.nodeId);
+        if (!targetNode) throw new Error(`Target node with id: ${newImage.nodeId} cannot be found`);
 
-        return find(node.addresses, (currentAddress) => currentAddress.type === 'local').url.href; // TODO ammend this line
+        const currentNode = find(nodes, (node) => node.id === context.info.nodeId);
+        if (!currentNode) throw new Error(`Current node with id: ${newImage.nodeId} cannot be found`);
+
+        if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
+          return find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href;
+        }
+        return makeBepHelper(context)
+          .getBep(accessToken, newImage.nodeId, context.info.serviceType, '/bep')
+          .then((result) => result.href)
+          .catch((err) => {
+            throw new Error(`Error occured while fetching BEP: ${err}`);
+          });
       })
       .then((nodeUrl) => makeDeploymentHelper(context)
         .deployImage(newImage.nodeId, nodeUrl, newImage.imageId, accessToken)));
