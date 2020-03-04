@@ -1,16 +1,16 @@
-const Q = require('q');
+const Promise = require('bluebird');
 const merge = require('lodash/merge');
 
 const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/edgeAuth');
 
 const makeBepHelper = (context) => {
   const getHmacCodeByReq = (accessToken, nodeId) => {
-    const deferred = Q.defer();
     const { edge } = context;
-    edge.getRequestBepHmacCode(accessToken, nodeId,
-      (hmacCode) => deferred.resolve(hmacCode),
-      (e) => deferred.reject(e));
-    return deferred.promise;
+    return new Promise((resolve, reject) => {
+      edge.getRequestBepHmacCode(accessToken, nodeId,
+        (hmacCode) => resolve(hmacCode),
+        (e) => reject(e));
+    });
   };
 
 

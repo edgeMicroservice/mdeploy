@@ -1,3 +1,6 @@
+/* eslint-disable arrow-body-style */
+/* eslint-disable no-unused-vars */
+const Promise = require('bluebird');
 const querystring = require('query-string');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
@@ -6,7 +9,7 @@ const makeRequestPromisifier = require('./requestPromisifier');
 const { findByServiceType } = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
 
-const fetchToken = () => 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6InBvc3Q6Y29uZmlndXJhdGlvbiIsImlhdCI6MTU4MTUyOTY2OCwiZXhwIjoxODgxNTI5NjY4fQ.XD1-9HCIIBV8GhSL2bhZZ2yFz8Vts6gqIifWBFxyzHQCH507OHg0I1E-UFRqViVumE0ODlR_ikRjRjr-kyFd_--PHfGVkGdpQ5C2osMZAhnC1QgPgq7_0FAyvL1uiwh3G4ef8QZ3izVrzsgYhnl5_x42TbwgW-h7HOaILS_yoyY';
+const fetchTokenFromMST = () => Promise.resolve('Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6ImNyZWF0ZTppbWFnZSByZWFkOmltYWdlcyBkZWxldGU6aW1hZ2UgY3JlYXRlOmNvbnRhaW5lciByZWFkOmNvbnRhaW5lcnMgZGVsZXRlOmNvbnRhaW5lciIsInN1YlR5cGUiOiJtZGVwbG95IiwiY3VzdCI6IjZmM2QyMGE1LTdhZWQtNGFjOS05ZGVjLTg5YTQwMTMzZTI3MiIsImlhdCI6MTU4MzI3OTUzMywiZXhwIjoxNTgzMzY1OTMzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjgwMjUvbVNUL3YxL2NsaWVudHMvR2VuZXJpYy1tZGVwbG95LTZmM2QyMGE1LTdhZWQtNGFjOS05ZGVjLTg5YTQwMTMzZTI3MiIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAyNS9tU1QvdjEvb2F1dGgvdG9rZW4iLCJzdWIiOiJHZW5lcmljLW1kZXBsb3ktNmYzZDIwYTUtN2FlZC00YWM5LTlkZWMtODlhNDAxMzNlMjcyQGNsaWVudHMifQ.r4ez7os6SKHqqwZLrrcGarZv8WOltQxuZ41HUzTfOjI');
 
 const makeHeaders = (auth, maps) => {
   const DELI = '\r\n';
@@ -24,62 +27,72 @@ const makeHeaders = (auth, maps) => {
   return headers;
 };
 
-// eslint-disable-next-line no-unused-vars
 const rpAuth = (serviceType, options, context) => {
   const updatedOptions = options;
 
-  if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
-    let url = updatedOptions.url || updatedOptions.uri;
-    const qs = querystring.stringify(updatedOptions.qs);
-    if (updatedOptions.qs) url = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
-
-    const requestOptions = {
-      url,
-      type: updatedOptions.method,
-    };
-    if (updatedOptions.body) requestOptions.data = updatedOptions.body;
-
-    // If mcm, donot append token
-    if (!updatedOptions.token) updatedOptions.token = fetchToken();
-    if (updatedOptions.token || (updatedOptions.headers && updatedOptions.headers.Authorization)) {
-      requestOptions.authorization = updatedOptions.token || updatedOptions.headers.Authorization;
+  return (() => {
+    if (!updatedOptions.token && serviceType !== 'MCM') {
+      return fetchTokenFromMST();
     }
-    const headerKeys = keysIn(updatedOptions.headers);
-    const isAdditionalHeaders = headerKeys.indexOf('Authorization') > -1 ? headerKeys.length > 1 : headerKeys.length > 0;
-    if (isAdditionalHeaders) {
-      const additionalHeaders = updatedOptions.headers;
-      delete additionalHeaders.Authorization;
-      requestOptions.authorization = makeHeaders(requestOptions.authorization, additionalHeaders);
-    }
-    return makeRequestPromisifier(context)
-      .request(requestOptions);
-  }
-  const keyMap = findByServiceType(serviceType);
-  if (!keyMap) throw new Error(`could not find key for serviceType: ${serviceType}`);
+    return Promise.resolve();
+  })()
+    .then((token) => {
+      if (token) updatedOptions.token = token;
 
-  let url = updatedOptions.url || updatedOptions.uri;
-  if (url.includes('?')) {
-    const [path, queries] = url.split('?');
-    url = path;
-    updatedOptions.qs = merge(updatedOptions.qs, querystring.parse(queries));
-  }
+      if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
+        let url = updatedOptions.url || updatedOptions.uri;
+        const qs = querystring.stringify(updatedOptions.qs);
+        if (updatedOptions.qs) url = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
 
-  updatedOptions.token = fetchToken();
+        const requestOptions = {
+          url,
+          type: updatedOptions.method,
+        };
+        if (updatedOptions.body) requestOptions.data = updatedOptions.body;
 
-  const edgeSessionParams = {
-    edgeSessionId: keyMap.sessionId,
-    edgeSessionInteraction: encrypt(
-      JSON.stringify(updatedOptions), keyMap.sessionId, keyMap.sessionSecret,
-    ),
-  };
+        if (updatedOptions.token
+          || (updatedOptions.headers && updatedOptions.headers.Authorization)) {
+          requestOptions.authorization = updatedOptions.token
+            || updatedOptions.headers.Authorization;
+        }
+        const headerKeys = keysIn(updatedOptions.headers);
+        const isAdditionalHeaders = headerKeys.indexOf('Authorization') > -1 ? headerKeys.length > 1 : headerKeys.length > 0;
+        if (isAdditionalHeaders) {
+          const additionalHeaders = updatedOptions.headers;
+          delete additionalHeaders.Authorization;
+          requestOptions.authorization = makeHeaders(
+            requestOptions.authorization, additionalHeaders,
+          );
+        }
+        return makeRequestPromisifier(context)
+          .request(requestOptions);
+      }
 
-  const qs = querystring.stringify(edgeSessionParams);
-  const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
+      const keyMap = findByServiceType(serviceType);
+      if (!keyMap) throw new Error(`could not find key for serviceType: ${serviceType}`);
 
-  return makeRequestPromisifier(context)
-    .request({
-      url: urlWithParams,
-      type: updatedOptions.method,
+      let url = updatedOptions.url || updatedOptions.uri;
+      if (url.includes('?')) {
+        const [path, queries] = url.split('?');
+        url = path;
+        updatedOptions.qs = merge(updatedOptions.qs, querystring.parse(queries));
+      }
+
+      const edgeSessionParams = {
+        edgeSessionId: keyMap.sessionId,
+        edgeSessionInteraction: encrypt(
+          JSON.stringify(updatedOptions), keyMap.sessionId, keyMap.sessionSecret,
+        ),
+      };
+
+      const qs = querystring.stringify(edgeSessionParams);
+      const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
+
+      return makeRequestPromisifier(context)
+        .request({
+          url: urlWithParams,
+          type: updatedOptions.method,
+        });
     });
 };
 

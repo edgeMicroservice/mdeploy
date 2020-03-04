@@ -1,28 +1,24 @@
+/* eslint-disable global-require */
+const jwt = require('jsonwebtoken');
+
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
-const { validate } = require('../lib/oauthHelper');
+
 const { decodePayload } = require('../lib/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
-  const { EAUTH_SYSTEM_PUBLIC_KEY, OAUTH_SYSTEM_PUBLIC_KEY } = req.context.env;
-  if (!req.authorization) {
-    next(new Error('authorization header is needed'));
-    return;
-  }
+  const { OAUTH_GENERIC_KEY } = req.context.env;
 
-  const token = extractToken(req.authorization);
-  let isMSTToken;
-  let payload;
+  const util = require('util');
+  console.log('===> ', Date.now(), 'req', util.inspect(req, false, null, true));
 
-  try {
-    payload = decodePayload(token);
-    isMSTToken = payload.iss && payload.iss.includes('mST/v1');
-  } catch (e) {
-    next(new Error(`invalid token: ${e.message}`));
-  }
-
-  if (isMSTToken) {
+  if (req.authorization) {
     try {
-      validate(token, OAUTH_SYSTEM_PUBLIC_KEY, scopes);
+      const token = extractToken(req.authorization);
+      const payload = decodePayload(token);
+
+      jwt.verify(token, OAUTH_GENERIC_KEY);
+      console.log('===> scopes', scopes);
+
       req.context.security = {
         type: 'SystemSecurity',
         issuer: 'MST',
@@ -35,21 +31,14 @@ const SecurityHandler = (req, definition, scopes, next) => {
     } catch (e) {
       next(new Error(`invalid token: ${e.message}`));
     }
+  } else if (req.securityMiddleware === 'eauth') {
+    req.context.security = {
+      type: 'SystemSecurity',
+      issuer: 'MES',
+    };
+    next();
   } else {
-    try {
-      validate(token, EAUTH_SYSTEM_PUBLIC_KEY);
-      req.context.security = {
-        type: 'SystemSecurity',
-        issuer: 'MES',
-        token: {
-          jwt: token,
-          payload,
-        },
-      };
-      next();
-    } catch (e) {
-      next(new Error(`invalid token: ${e.message}`));
-    }
+    next(new Error('authorization header is needed'));
   }
 };
 

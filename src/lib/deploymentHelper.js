@@ -32,7 +32,7 @@ const makeDeploymentHelper = (context) => {
     const { env } = context;
 
     return generateHmac(nodeId, imageId, accessToken)
-      .fail((err) => {
+      .catch((err) => {
         const error = err;
         error.message = `cannot generate hmac: ${err.message}`;
         throw new Error(error);

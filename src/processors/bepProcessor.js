@@ -1,15 +1,13 @@
-const Q = require('q');
+const Promise = require('bluebird');
 
 const makeBepProcessor = (context) => {
-  const getBep = (hmac) => {
-    const deferred = Q.defer();
+  const getBep = (hmac) => new Promise((resolve, reject) => {
     context.edge.requestBep({
       code: hmac,
-      success: (result) => deferred.resolve({ href: result.data }),
-      error: (err) => deferred.reject(new Error(err.message)),
+      success: (result) => resolve({ href: result.data }),
+      error: (err) => reject(new Error(err.message)),
     });
-    return deferred.promise;
-  };
+  });
 
   return {
     getBep,

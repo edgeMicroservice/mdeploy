@@ -1,28 +1,30 @@
-const Q = require('q');
+const Promise = require('bluebird');
 
 const TOKEN_TAG = 'token';
 
 const makeClientModel = (context) => {
   const { storage } = context;
 
-  const saveClientToken = (accessToken, expiresAt) => Q.fcall(() => {
+  const saveClientToken = (accessToken, expiresAt) => {
     storage.setItem(TOKEN_TAG, JSON.stringify({
       accessToken,
       expiresAt,
     }));
-  });
+    return Promise.resolve();
+  };
 
-  const getClientToken = () => Q.fcall(() => {
+  const getClientToken = () => {
     const clientTokenStr = storage.getItem(TOKEN_TAG);
     const clientToken = !clientTokenStr || clientTokenStr === '' ? null : JSON.parse(clientTokenStr);
     if (!clientToken) throw new Error('client is not activated for this service');
     if (clientToken.expiresAt < Date.now()) throw new Error('client\'s activation is expired for this service');
-    return clientToken.accessToken;
-  });
+    return Promise.resolve(clientToken.accessToken);
+  };
 
-  const deleteClientToken = () => Q.fcall(() => {
+  const deleteClientToken = () => {
     storage.setItem(TOKEN_TAG, '');
-  });
+    return Promise.resolve();
+  };
 
   return {
     getClientToken,

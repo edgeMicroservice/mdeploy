@@ -4,8 +4,17 @@
   "env": {
     "MCM.BASE_API_PATH": "/mdeploy/v1",
     "MCM.WEBSOCKET_SUPPORT": "true",
-    "OAUTH_SYSTEM_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+VR/hPU9kUNaWHsF9AcaoftoN\n6F19KGTBQN+vn4meRAqAyM9JPjYgeje4c4ofQ3xrYA57mDGVo7v1eBVLbnEEOwye\nsCkC1e9pCcOFb3MGDlAT/B8oNOQLYCB4FaS2B4ufuyRAgd6UFCZMHENw1llHtKi6\nojVTpgTlNuNYjeYf3QIDAQAB\n-----END PUBLIC KEY-----\n",
-    "EAUTH_SYSTEM_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+VR/hPU9kUNaWHsF9AcaoftoN\n6F19KGTBQN+vn4meRAqAyM9JPjYgeje4c4ofQ3xrYA57mDGVo7v1eBVLbnEEOwye\nsCkC1e9pCcOFb3MGDlAT/B8oNOQLYCB4FaS2B4ufuyRAgd6UFCZMHENw1llHtKi6\nojVTpgTlNuNYjeYf3QIDAQAB\n-----END PUBLIC KEY-----\n",
-    "MDEPLOYMENYAGENT_URL": "localhost:8084/mdeplomentagent/v1"
+    "OAUTH_GENERIC_KEY": "438ac5e62b94635e099850b79bb223965f9be7ce96dd86a51259ae2d9443e8b9a7cd7475d35c6530554ec0feea56c4e73d7b1a17aaf6b2605571160dc5f78dd8",
+    "OAUTH_CLIENT_ID": "16bd7ba5-b6be-4b0f-b9c6-6d0a6ef86895",
+    "OAUTH_CLIENT_SECRET": "00ee1065d3b4c3386fb18f87cf2c25e21dd6fd134ee0ad93882e9a609b8e65cc6764f968450a55be1f27e054e9db5367e5690117a3191b575d4649126613a29e",
+    "MST_URL": "http://localhost:8025/mST/v1",
+    "MDEPLOYMENYAGENT_URL": "localhost:8084/mdeplomentagent/v1",
+    "SESSION_KEYS_MAP": [
+      {
+        "sessionId": "asdfzxcvasdfzcxv",
+        "sessionSecret": "asdfasdfasdfasdfasdfasdfasdfasdf",
+        "projectId": "0a8d368e-7708-4c1c-b705-d6d9437bb20c"
+      }
+    ]
   }
 }

@@ -1,4 +1,4 @@
-const Q = require('q');
+const Promise = require('bluebird');
 const find = require('lodash/find');
 
 const makeNodesHelper = (context) => {
@@ -21,13 +21,11 @@ const makeNodesHelper = (context) => {
     return { ...node, url };
   };
 
-  const clusterDiscovery = (type, accessToken) => {
-    const deferred = Q.defer();
+  const clusterDiscovery = (type, accessToken) => new Promise((resolve, reject) => {
     edge.clusterDiscovery(
-      type, accessToken, (nodes) => deferred.resolve(nodes), (err) => deferred.reject(err),
+      type, accessToken, (nodes) => resolve(nodes), (err) => reject(err),
     );
-    return deferred.promise;
-  };
+  });
 
   const findByAccount = (accessToken) => clusterDiscovery('account', accessToken)
     .then((data) => data.nodes.map((node) => populateUrl(node)));

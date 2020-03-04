@@ -1,4 +1,4 @@
-const Q = require('q');
+const Promise = require('bluebird');
 const find = require('lodash/find');
 const merge = require('lodash/merge');
 
@@ -33,7 +33,7 @@ const makeClusterOpsProcessor = (context) => {
             responseBody: result,
             requestOptions: outputOptions,
           }))
-          .fail((err) => ({
+          .catch((err) => ({
             nodeId,
             serviceType,
             responseType: 'failure',
@@ -52,7 +52,7 @@ const makeClusterOpsProcessor = (context) => {
         if (!selectedNode) throw new Error(`cannot create cluster operation. node with id: ${id} cannot be found`);
         return createOperationRequest(id, serviceType, clusterOp.request, accessToken);
       });
-      return Q.all(operationsPromises);
+      return Promise.all(operationsPromises);
     });
 
   return {

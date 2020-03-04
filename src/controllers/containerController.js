@@ -7,7 +7,7 @@ const getContainers = (req, res) => {
   makeContainerProcessor(context)
     .getContainers()
     .then((data) => response.sendResult({ data }, 200, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 const postContainer = (req, res) => {
@@ -16,7 +16,7 @@ const postContainer = (req, res) => {
   makeContainerProcessor(context)
     .postContainer(swagger.params.newContainer)
     .then((data) => response.sendResult({ data }, 201, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 const deleteContainer = (req, res) => {
@@ -25,7 +25,7 @@ const deleteContainer = (req, res) => {
   makeContainerProcessor(context)
     .deleteContainer(swagger.params.id)
     .then((data) => response.sendResult({ data }, 200, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 module.exports = {

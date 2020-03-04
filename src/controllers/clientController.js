@@ -19,7 +19,7 @@ const updateClientStatus = (req, res) => {
       };
       response.sendResult(responseObj, 200, res);
     })
-    .fail((err) => {
+    .catch((err) => {
       response.sendError(err, res, 400);
     });
 };

@@ -8,7 +8,7 @@ const createClusterOp = (req, res) => {
   makeClusterOpsProcessor(context)
     .createClusterOp(swagger.params.newClusterOp, context.security.token.jwt)
     .then((data) => response.sendResult({ data }, 201, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 module.exports = {

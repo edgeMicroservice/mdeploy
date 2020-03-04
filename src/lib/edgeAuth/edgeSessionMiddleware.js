@@ -28,11 +28,14 @@ const edgeSessionMiddleware = (req, res, next) => {
     if (options.qs) {
       const qs = querystring.stringify(options.qs);
       req.url = `${req.url.split('?')[0]}?${qs}`;
+    } else {
+      req.url = `${req.url.split('?')[0]}`;
     }
     if (options.token || (options.headers && options.headers.Authorization)) {
       req.authorization = options.token || options.headers.Authorization;
     }
     if (options.body) req.body = JSON.stringify(options.body);
+    req.securityMiddleware = 'eauth';
 
     next();
   } else {

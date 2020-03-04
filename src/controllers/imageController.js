@@ -10,7 +10,7 @@ const postImage = (req, res) => {
     .then((result) => {
       response.sendResult(result, 201, res);
     })
-    .fail((err) => {
+    .catch((err) => {
       response.sendError(err, res, 400);
     });
 };
@@ -21,7 +21,7 @@ const getImages = (req, res) => {
   makeImageProcessor(context)
     .getImages()
     .then((data) => response.sendResult({ data }, 200, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 const deleteImage = (req, res) => {
@@ -30,7 +30,7 @@ const deleteImage = (req, res) => {
   makeImageProcessor(context)
     .deleteImage(swagger.params.id)
     .then((data) => response.sendResult({ data }, 200, res))
-    .fail((err) => response.sendError(err, res, 400));
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 module.exports = {
