@@ -25,20 +25,20 @@ const makeClusterOpsProcessor = (context) => {
         if (outputOptions.headers && outputOptions.headers.Authorization) {
           outputOptions.headers.Authorization = undefined;
         }
-        return rpAuth(serviceType, updatedRequestOptions, context, true)
+        const serviceNameVersion = serviceType.substr(37, serviceType.length);
+        const serviceName = serviceNameVersion.split('-')[0];
+        return rpAuth(serviceName, updatedRequestOptions, context)
           .then((result) => ({
             nodeId,
             serviceType,
             responseType: 'success',
             responseBody: result,
-            requestOptions: outputOptions,
           }))
           .catch((err) => ({
             nodeId,
             serviceType,
             responseType: 'failure',
             responseBody: err,
-            requestOptions: outputOptions,
           }));
       });
   };

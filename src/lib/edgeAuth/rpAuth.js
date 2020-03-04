@@ -1,15 +1,42 @@
-/* eslint-disable arrow-body-style */
-/* eslint-disable no-unused-vars */
 const Promise = require('bluebird');
 const querystring = require('query-string');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
 
 const makeRequestPromisifier = require('./requestPromisifier');
-const { findByServiceType } = require('./sessionMap');
+const makeSessionMap = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
 
-const fetchTokenFromMST = () => Promise.resolve('Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6ImNyZWF0ZTppbWFnZSByZWFkOmltYWdlcyBkZWxldGU6aW1hZ2UgY3JlYXRlOmNvbnRhaW5lciByZWFkOmNvbnRhaW5lcnMgZGVsZXRlOmNvbnRhaW5lciIsInN1YlR5cGUiOiJtZGVwbG95IiwiY3VzdCI6IjZmM2QyMGE1LTdhZWQtNGFjOS05ZGVjLTg5YTQwMTMzZTI3MiIsImlhdCI6MTU4MzI3OTUzMywiZXhwIjoxNTgzMzY1OTMzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjgwMjUvbVNUL3YxL2NsaWVudHMvR2VuZXJpYy1tZGVwbG95LTZmM2QyMGE1LTdhZWQtNGFjOS05ZGVjLTg5YTQwMTMzZTI3MiIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAyNS9tU1QvdjEvb2F1dGgvdG9rZW4iLCJzdWIiOiJHZW5lcmljLW1kZXBsb3ktNmYzZDIwYTUtN2FlZC00YWM5LTlkZWMtODlhNDAxMzNlMjcyQGNsaWVudHMifQ.r4ez7os6SKHqqwZLrrcGarZv8WOltQxuZ41HUzTfOjI');
+const fetchTokenFromMST = (serviceType, context) => {
+  const {
+    OAUTH_CLIENT_ID,
+    OAUTH_CLIENT_SECRET,
+    MST_URL,
+    CUSTOMER_CODE,
+  } = context.env;
+
+  return makeRequestPromisifier(context)
+    .request({
+      url: `${MST_URL}/oauth/token`,
+      type: 'POST',
+      data: {
+        client_id: OAUTH_CLIENT_ID,
+        client_secret: OAUTH_CLIENT_SECRET,
+        audience: `${MST_URL}/clients/Generic-${serviceType}-${CUSTOMER_CODE}`,
+        grant_type: 'client_credentials',
+      },
+    })
+    .then((response) => ({ token: `${response.data.token_type} ${response.data.access_token}` }))
+    .catch((error) => {
+      console.log('cannot fetch token from mST', {
+        serviceType,
+        error,
+      });
+      return {
+        error,
+      };
+    });
+};
 
 const makeHeaders = (auth, maps) => {
   const DELI = '\r\n';
@@ -20,26 +47,41 @@ const makeHeaders = (auth, maps) => {
     if (headers) {
       headers = `${headers}${DELI}${key}: ${value}`;
     } else {
-      headers = `no-token${DELI}${key}: ${value}`;
+      headers = `${DELI}${key}: ${value}`;
     }
   });
 
   return headers;
 };
 
-const rpAuth = (serviceType, options, context) => {
+const rpAuth = (serviceObj, options, context) => {
+  let serviceType;
+  let projectId;
+  if (typeof serviceObj === 'string') {
+    serviceType = serviceObj;
+  } else {
+    serviceType = serviceObj.serviceType;
+    projectId = serviceObj.projectId;
+  }
+
   const updatedOptions = options;
 
   return (() => {
     if (!updatedOptions.token && serviceType !== 'MCM') {
-      return fetchTokenFromMST();
+      return fetchTokenFromMST(serviceType, context);
     }
-    return Promise.resolve();
+    return Promise.resolve({});
   })()
-    .then((token) => {
-      if (token) updatedOptions.token = token;
+    .then((tokenResult) => {
+      if (tokenResult.token) updatedOptions.token = tokenResult.token;
+
+      console.log('===> options', options);
 
       if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
+        if (serviceType !== 'MCM' && tokenResult.error) {
+          console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+          return Promise.reject(new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`));
+        }
         let url = updatedOptions.url || updatedOptions.uri;
         const qs = querystring.stringify(updatedOptions.qs);
         if (updatedOptions.qs) url = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
@@ -68,8 +110,8 @@ const rpAuth = (serviceType, options, context) => {
           .request(requestOptions);
       }
 
-      const keyMap = findByServiceType(serviceType);
-      if (!keyMap) throw new Error(`could not find key for serviceType: ${serviceType}`);
+      const keyMap = makeSessionMap(context).findByProject(projectId);
+      if (!keyMap) throw new Error(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
 
       let url = updatedOptions.url || updatedOptions.uri;
       if (url.includes('?')) {

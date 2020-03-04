@@ -1,7 +1,7 @@
 const querystring = require('query-string');
 
 const { decrypt } = require('./encryptionHelper');
-const { findBySessionId } = require('./sessionMap');
+const makeSessionMap = require('./sessionMap');
 
 const edgeSessionMiddleware = (req, res, next) => {
   const { url } = req;
@@ -14,7 +14,7 @@ const edgeSessionMiddleware = (req, res, next) => {
       throw new Error('both edgeSessionId and edgeSessionInteraction are required in the query string to decrypt request');
     }
 
-    const keyMap = findBySessionId(queryParams.edgeSessionId);
+    const keyMap = makeSessionMap(req.context).findBySessionId(queryParams.edgeSessionId);
     if (!keyMap) throw new Error('cannot find edgeSessionId. might have been removed or expired');
     let options;
     try {
@@ -35,7 +35,7 @@ const edgeSessionMiddleware = (req, res, next) => {
       req.authorization = options.token || options.headers.Authorization;
     }
     if (options.body) req.body = JSON.stringify(options.body);
-    req.securityMiddleware = 'eauth';
+    req.securityMiddleware = 'esession';
 
     next();
   } else {

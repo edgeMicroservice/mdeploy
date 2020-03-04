@@ -23,17 +23,14 @@ const makeBepHelper = (context) => {
           hmac,
         },
       };
+
       return getEdgeServiceLinkByNodeId(nodeId, serviceType, accessToken, context)
         .then((serviceLink) => {
           const updatedRequestOptions = merge(requestOptions, serviceLink);
           updatedRequestOptions.url = `${updatedRequestOptions.url}${endpoint}`;
-
-          const outputOptions = updatedRequestOptions;
-          outputOptions.token = undefined;
-          if (outputOptions.headers && outputOptions.headers.Authorization) {
-            outputOptions.headers.Authorization = undefined;
-          }
-          return rpAuth(serviceType, updatedRequestOptions, context, true);
+          const serviceNameVersion = serviceType.substr(37, serviceType.length);
+          const serviceName = serviceNameVersion.split('-')[0];
+          return rpAuth(serviceName, updatedRequestOptions, context, true);
         });
     });
 
