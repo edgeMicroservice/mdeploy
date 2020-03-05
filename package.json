@@ -16,7 +16,7 @@
     "package": "node ./node_modules/@mimik/edge-ms-packager/index.js"
   },
   "dependencies": {
-    "@mimik/edge-ms-helper": "1.1.2",
+    "@mimik/edge-ms-helper": "1.1.1",
     "Base64": "^1.1.0",
     "bluebird": "3.7.2",
     "crypto-browserify": "^3.12.0",
