@@ -1,5 +1,5 @@
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
-const { decodePayload } = require('../lib/jwtHelper');
+const { decodePayload } = require('../util/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
   if (!req.authorization) {

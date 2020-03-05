@@ -1,4 +1,4 @@
-const { rpAuth } = require('../lib/edgeAuth');
+const { rpAuth } = require('../lib/auth-helper');
 
 const MCM_URL = '127.0.0.1:8083/mcm/v1';
 

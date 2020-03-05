@@ -1,10 +1,9 @@
-/* eslint-disable global-require */
 const jwt = require('jsonwebtoken');
 const find = require('lodash/find');
 
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
 
-const { decodePayload } = require('../lib/jwtHelper');
+const { decodePayload } = require('../util/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
   const { OAUTH_GENERIC_KEY } = req.context.env;
@@ -18,9 +17,6 @@ const SecurityHandler = (req, definition, scopes, next) => {
       }
     });
   };
-
-  const util = require('util');
-  console.log('===> ', Date.now(), 'req', util.inspect(req, false, null, true));
 
   if (req.authorization && req.authorization !== '') {
     try {

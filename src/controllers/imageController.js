@@ -7,12 +7,8 @@ const postImage = (req, res) => {
 
   makeImageProcessor(context)
     .postImage(swagger.params.newImage)
-    .then((result) => {
-      response.sendResult(result, 201, res);
-    })
-    .catch((err) => {
-      response.sendError(err, res, 400);
-    });
+    .then((result) => response.sendResult(result, 201, res))
+    .catch((err) => response.sendError(err, res, 400));
 };
 
 const getImages = (req, res) => {

@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 const find = require('lodash/find');
 const merge = require('lodash/merge');
 
-const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/edgeAuth');
+const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 const makeNodesHelper = require('../lib/nodesHelper');
 
 const makeClusterOpsProcessor = (context) => {

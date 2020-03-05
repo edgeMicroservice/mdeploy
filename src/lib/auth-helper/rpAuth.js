@@ -27,15 +27,9 @@ const fetchTokenFromMST = (serviceType, context) => {
       },
     })
     .then((response) => ({ token: `${response.data.token_type} ${response.data.access_token}` }))
-    .catch((error) => {
-      console.log('cannot fetch token from mST', {
-        serviceType,
-        error,
-      });
-      return {
-        error,
-      };
-    });
+    .catch((error) => ({
+      error,
+    }));
 };
 
 const makeHeaders = (auth, maps) => {
@@ -74,8 +68,6 @@ const rpAuth = (serviceObj, options, context) => {
   })()
     .then((tokenResult) => {
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
-
-      console.log('===> options', options);
 
       if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== 'MCM' && tokenResult.error) {

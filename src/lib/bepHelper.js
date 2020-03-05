@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 const merge = require('lodash/merge');
 
-const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/edgeAuth');
+const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 
 const makeBepHelper = (context) => {
   const getHmacCodeByReq = (accessToken, nodeId) => {
