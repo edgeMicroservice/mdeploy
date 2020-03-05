@@ -38,6 +38,9 @@ const makeDeploymentHelper = (context) => {
         throw new Error(error);
       })
       .then((hmac) => {
+        const serviceNameVersion = imageId.substr(37, imageId);
+        const serviceName = serviceNameVersion.split('-')[0];
+        const serviceVersion = serviceNameVersion.split('-')[1];
         const options = {
           url: env.MDEPLOYMENYAGENT_URL,
           method: 'POST',
@@ -52,6 +55,10 @@ const makeDeploymentHelper = (context) => {
               headers: {
                 Authorization: `bearer ${accessToken}`,
               },
+            },
+            service: {
+              name: serviceName,
+              version: serviceVersion,
             },
           },
         };
