@@ -67,6 +67,10 @@ const rpAuth = (serviceObj, options, context) => {
     return Promise.resolve({});
   })()
     .then((tokenResult) => {
+      if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
+        console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+        return Promise.reject(new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`));
+      }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
       if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {

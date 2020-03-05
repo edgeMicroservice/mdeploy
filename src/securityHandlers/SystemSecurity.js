@@ -38,7 +38,7 @@ const SecurityHandler = (req, definition, scopes, next) => {
     } catch (e) {
       next(new Error(`invalid token: ${e.message}`));
     }
-  } else if (req.securityMiddleware === 'esession' && req.context.env.ACCEPT_ESESSION_AUTHORIZATION === 'yes') {
+  } else if (req.securityMiddleware === 'esession' && req.context.env.SESSION_SECURITY_AUTHORIZATION_SET === 'on') {
     req.context.security = {
       type: 'SystemSecurity',
       issuer: 'MES',
