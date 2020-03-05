@@ -5,7 +5,7 @@ const merge = require('lodash/merge');
 const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 const makeNodesHelper = require('../lib/nodesHelper');
 
-const makeClusterOpsProcessor = (context) => {
+const makeBatchOpsProcessor = (context) => {
   const createOperationRequest = (nodeId, serviceType, request, accessToken) => {
     const requestOptions = {
       method: request.method,
@@ -43,21 +43,21 @@ const makeClusterOpsProcessor = (context) => {
       });
   };
 
-  const createClusterOp = (clusterOp, accessToken) => makeNodesHelper(context)
+  const createBatchOp = (batchOp, accessToken) => makeNodesHelper(context)
     .findByAccount(accessToken)
     .then((nodes) => {
       const { serviceType } = context.info;
-      const operationsPromises = clusterOp.nodes.map((id) => {
+      const operationsPromises = batchOp.nodes.map((id) => {
         const selectedNode = find(nodes, (node) => node.id === id);
-        if (!selectedNode) throw new Error(`cannot create cluster operation. node with id: ${id} cannot be found`);
-        return createOperationRequest(id, serviceType, clusterOp.request, accessToken);
+        if (!selectedNode) throw new Error(`cannot create batch operation. node with id: ${id} cannot be found`);
+        return createOperationRequest(id, serviceType, batchOp.request, accessToken);
       });
       return Promise.all(operationsPromises);
     });
 
   return {
-    createClusterOp,
+    createBatchOp,
   };
 };
 
-module.exports = makeClusterOpsProcessor;
+module.exports = makeBatchOpsProcessor;
