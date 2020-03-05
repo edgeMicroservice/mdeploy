@@ -24,7 +24,7 @@ const deleteContainer = (req, res) => {
 
   makeContainerProcessor(context)
     .deleteContainer(swagger.params.id)
-    .then((data) => response.sendResult({ data }, 200, res))
+    .then(() => response.sendResult({ data: swagger.params.id }, 200, res))
     .catch((err) => response.sendError(err, res, 400));
 };
 
