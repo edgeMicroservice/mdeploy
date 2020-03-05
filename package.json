@@ -29,7 +29,7 @@
     "router": "1.3.4"
   },
   "devDependencies": {
-    "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#EDGEMS-296-create-mdeploy-microservice",
+    "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy",
     "@mimik/swagger-mw-codegen": "1.1.3",
     "@mimik/edge-ms-packager": "1.0.1",
     "@babel/core": "7.8.7",
