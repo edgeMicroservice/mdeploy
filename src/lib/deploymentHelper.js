@@ -42,7 +42,7 @@ const makeDeploymentHelper = (context) => {
         const serviceName = serviceNameVersion.split('-')[0];
         const serviceVersion = serviceNameVersion.split('-')[1];
         const options = {
-          url: env.MDEPLOYMENYAGENT_URL,
+          url: `${env.MDEPLOYMENYAGENT_URL}/images`,
           method: 'POST',
           body: {
             imageLink: {
