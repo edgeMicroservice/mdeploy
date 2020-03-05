@@ -64,3 +64,4 @@ deploy
 # Other temp files
 package-lock.json
 ~*
+local/start.json
