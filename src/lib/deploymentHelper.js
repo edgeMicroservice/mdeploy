@@ -38,7 +38,7 @@ const makeDeploymentHelper = (context) => {
         throw new Error(error);
       })
       .then((hmac) => {
-        const serviceNameVersion = imageId.substr(37, imageId);
+        const serviceNameVersion = imageId.substr(37, imageId.length);
         const serviceName = serviceNameVersion.split('-')[0];
         const serviceVersion = serviceNameVersion.split('-')[1];
         const options = {
@@ -62,7 +62,7 @@ const makeDeploymentHelper = (context) => {
             },
           },
         };
-        return rpAuth('MCM', options, context, true);
+        return rpAuth('mdeploymentagent', options, context, false);
       });
   };
 

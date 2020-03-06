@@ -48,7 +48,7 @@ const makeHeaders = (auth, maps) => {
   return headers;
 };
 
-const rpAuth = (serviceObj, options, context) => {
+const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
   let serviceType;
   let projectId;
   if (typeof serviceObj === 'string') {
@@ -73,7 +73,7 @@ const rpAuth = (serviceObj, options, context) => {
       }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
-      if (serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
+      if (!encryptRequest || serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== 'MCM' && tokenResult.error) {
           console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
           return Promise.reject(new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`));

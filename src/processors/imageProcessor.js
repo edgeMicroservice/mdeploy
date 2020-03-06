@@ -18,7 +18,7 @@ const makeImageProcessor = (context) => {
         if (!targetNode) throw new Error(`Target node with id: ${newImage.nodeId} cannot be found`);
 
         const currentNode = find(nodes, (node) => node.id === context.info.nodeId);
-        if (!currentNode) throw new Error(`Current node with id: ${newImage.nodeId} cannot be found`);
+        if (!currentNode) throw new Error(`Current node with id: ${context.info.nodeId} cannot be found`);
 
         if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
           return find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href;

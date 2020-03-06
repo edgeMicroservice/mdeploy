@@ -10,7 +10,7 @@
     "SESSION_SECURITY_AUTHORIZATION_SET": "off",
     "MST_URL": "http://localhost:8025/mST/v1",
     "CUSTOMER_CODE": "--customer-code--",
-    "MDEPLOYMENYAGENT_URL": "localhost:8084/mdeplomentagent/v1",
+    "MDEPLOYMENYAGENT_URL": "http://localhost:8084/mdeploymentagent/v1",
     "SESSION_KEYS_MAP": "[{\"sessionId\": \"--random-16-chars--\",\"sessionSecret\": \"--random-32-chars--\",\"projectId\": \"--project-client-id--\"}]"
   }
 }
