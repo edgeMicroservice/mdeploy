@@ -2,6 +2,9 @@ const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
 const { extractFromServiceType } = require('../util/serviceNameHelper');
 
 const JSONRPC_URL = 'http://127.0.0.1:8083/jsonrpc/v1';
+const JSONRPC_VERSION = '2.0';
+const JSONRPC_METHOD = 'getEdgeHmacCode';
+
 const MCM_URL = 'http://127.0.0.1:8083/mcm/v1';
 
 const HMAC_EXPIRES_IN = 60; // in seconds
@@ -12,8 +15,8 @@ const makeDeploymentHelper = (context) => {
       url: JSONRPC_URL,
       method: 'POST',
       body: {
-        jsonrpc: '2.0',
-        method: 'getEdgeHmacCode',
+        jsonrpc: JSONRPC_VERSION,
+        method: JSONRPC_METHOD,
         params: [
           accessToken,
           `${(new Date()).getTime() + HMAC_EXPIRES_IN}`,

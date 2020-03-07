@@ -6,6 +6,8 @@ const makeDeploymentHelper = require('../lib/deploymentHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
 const makeBepHelper = require('../lib/bepHelper');
 
+const BEP_ENDPOINT = '/bep';
+
 const fetchToken = (context) => makeTokenSelector(context)
   .selectUserToken();
 
@@ -24,7 +26,7 @@ const makeImageProcessor = (context) => {
           return find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href;
         }
         return makeBepHelper(context)
-          .getBep(accessToken, newImage.nodeId, context.info.serviceType, '/bep')
+          .getBep(accessToken, newImage.nodeId, context.info.serviceType, BEP_ENDPOINT)
           .then((result) => result.href)
           .catch((err) => {
             throw new Error(`Error occured while fetching BEP: ${err}`);
