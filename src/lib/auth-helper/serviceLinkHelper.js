@@ -2,18 +2,29 @@ const find = require('lodash/find');
 const Base64 = require('Base64');
 
 const makeNodesHelper = require('../nodesHelper');
+const { extractFromServiceType } = require('../../util/serviceNameHelper');
+
+const ADDRESS_TYPE = {
+  PUBLIC: 'public',
+  PROXY: 'proxy',
+  LOCAL: 'local',
+};
 
 const getEdgeServiceLinkByNodeId = (nodeId, serviceType, edgeAccessToken, ctx) => {
   const getNodeLink = (currentNode, targetNode) => {
     if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
-      const nodeAddress = find(targetNode.addresses, (address) => address.type === 'local');
+      const nodeAddress = find(
+        targetNode.addresses, (address) => address.type === ADDRESS_TYPE.LOCAL,
+      );
       if (!nodeAddress) throw new Error(`cannot found local address for target node: ${nodeId}`);
       return {
         url: nodeAddress.url.href,
       };
     }
 
-    const proxyAddress = find(targetNode.addresses, (address) => address.type === 'proxy');
+    const proxyAddress = find(
+      targetNode.addresses, (address) => address.type === ADDRESS_TYPE.PROXY,
+    );
     if (!proxyAddress) throw new Error(`cannot found proxy address for target node: ${nodeId}`);
     const routingHeader = Base64.btoa(JSON.stringify({
       nodeId: targetNode.id,
@@ -37,9 +48,8 @@ const getEdgeServiceLinkByNodeId = (nodeId, serviceType, edgeAccessToken, ctx) =
     let serviceAddress;
     if (selectedService.self) serviceAddress = selectedService.self;
     else {
-      const serviceId = srvcType.substr(0, 36);
-      const serviceNameVersion = srvcType.substr(37, srvcType.length + 1);
-      serviceAddress = `${serviceId}/${serviceNameVersion.split('-')[0]}/${serviceNameVersion.split('-')[1]}`;
+      const { serviceAddress: srvcAdd } = extractFromServiceType(srvcType);
+      serviceAddress = srvcAdd;
     }
     const nodeUrl = updatedLink.url;
     updatedLink.url = nodeUrl.substr(nodeUrl.length - 1, nodeUrl.length) === '/' ? `${nodeUrl}${serviceAddress}` : `${nodeUrl}/${serviceAddress}`;
@@ -50,7 +60,7 @@ const getEdgeServiceLinkByNodeId = (nodeId, serviceType, edgeAccessToken, ctx) =
     .findByAccount(edgeAccessToken)
     .then((nodes) => {
       const targetNode = find(nodes, (node) => node.id === nodeId);
-      if (!targetNode) throw new Error(`targer node with id: ${nodeId} cannot be found`);
+      if (!targetNode) throw new Error(`target node with id: ${nodeId} cannot be found`);
       const currentNode = find(nodes, (node) => node.id === ctx.info.nodeId);
       if (!currentNode) throw new Error(`current node with id: ${ctx.info.nodeId} cannot be found`);
       const nodeLink = getNodeLink(currentNode, targetNode);

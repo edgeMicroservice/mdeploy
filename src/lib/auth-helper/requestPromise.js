@@ -1,6 +1,6 @@
 const Promise = require('bluebird');
 
-const makeRequestPromisifier = (context) => {
+const makeRequestPromise = (context) => {
   const request = (options) => {
     const { http } = context;
     return new Promise((resolve, reject) => {
@@ -32,4 +32,4 @@ const makeRequestPromisifier = (context) => {
 };
 
 
-module.exports = makeRequestPromisifier;
+module.exports = makeRequestPromise;

@@ -1,4 +1,5 @@
-const { rpAuth } = require('../lib/auth-helper');
+const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
+const { extractFromServiceType } = require('../util/serviceNameHelper');
 
 const JSONRPC_URL = 'http://127.0.0.1:8083/jsonrpc/v1';
 const MCM_URL = 'http://127.0.0.1:8083/mcm/v1';
@@ -21,7 +22,7 @@ const makeDeploymentHelper = (context) => {
         ],
       },
     };
-    return rpAuth('MCM', options, context, true)
+    return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
       .then((response) => {
         if (response.error) throw new Error(response.error);
         return response.result.edgeHmacCode;
@@ -38,9 +39,7 @@ const makeDeploymentHelper = (context) => {
         throw new Error(error);
       })
       .then((hmac) => {
-        const serviceNameVersion = imageId.substr(37, imageId.length);
-        const serviceName = serviceNameVersion.split('-')[0];
-        const serviceVersion = serviceNameVersion.split('-')[1];
+        const { serviceName, serviceVersion } = extractFromServiceType(imageId);
         const options = {
           url: `${env.MDEPLOYMENYAGENT_URL}/images`,
           method: 'POST',

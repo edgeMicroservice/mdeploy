@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const merge = require('lodash/merge');
 
 const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
+const { extractFromServiceType } = require('../util/serviceNameHelper');
 
 const makeBepHelper = (context) => {
   const getHmacCodeByReq = (accessToken, nodeId) => {
@@ -9,7 +10,7 @@ const makeBepHelper = (context) => {
     return new Promise((resolve, reject) => {
       edge.getRequestBepHmacCode(accessToken, nodeId,
         (hmacCode) => resolve(hmacCode),
-        (e) => reject(e));
+        (error) => reject(error));
     });
   };
 
@@ -28,8 +29,7 @@ const makeBepHelper = (context) => {
         .then((serviceLink) => {
           const updatedRequestOptions = merge(requestOptions, serviceLink);
           updatedRequestOptions.url = `${updatedRequestOptions.url}${endpoint}`;
-          const serviceNameVersion = serviceType.substr(37, serviceType.length);
-          const serviceName = serviceNameVersion.split('-')[0];
+          const { serviceName } = extractFromServiceType(serviceType);
           return rpAuth(serviceName, updatedRequestOptions, context, true);
         });
     });

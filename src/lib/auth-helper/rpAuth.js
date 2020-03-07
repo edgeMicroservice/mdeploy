@@ -3,9 +3,10 @@ const querystring = require('query-string');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
 
-const makeRequestPromisifier = require('./requestPromisifier');
+const makeRequestPromise = require('./requestPromise');
 const makeSessionMap = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
+const { SERVICE_CONSTANTS } = require('./common');
 
 const fetchTokenFromMST = (serviceType, context) => {
   const {
@@ -15,7 +16,7 @@ const fetchTokenFromMST = (serviceType, context) => {
     CUSTOMER_CODE,
   } = context.env;
 
-  return makeRequestPromisifier(context)
+  return makeRequestPromise(context)
     .request({
       url: `${MST_URL}/oauth/token`,
       type: 'POST',
@@ -61,7 +62,7 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
   const updatedOptions = options;
 
   return (() => {
-    if (!updatedOptions.token && serviceType !== 'MCM') {
+    if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM) {
       return fetchTokenFromMST(serviceType, context);
     }
     return Promise.resolve({});
@@ -69,14 +70,14 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
     .then((tokenResult) => {
       if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
         console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-        return Promise.reject(new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`));
+        throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
       }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
-      if (!encryptRequest || serviceType === 'MCM' || (options.headers && options.headers['x-mimik-routing'])) {
-        if (serviceType !== 'MCM' && tokenResult.error) {
+      if (!encryptRequest || serviceType === SERVICE_CONSTANTS.MCM || (options.headers && options.headers['x-mimik-routing'])) {
+        if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
           console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-          return Promise.reject(new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`));
+          throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
         }
         let url = updatedOptions.url || updatedOptions.uri;
         const qs = querystring.stringify(updatedOptions.qs);
@@ -102,7 +103,7 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
             requestOptions.authorization, additionalHeaders,
           );
         }
-        return makeRequestPromisifier(context)
+        return makeRequestPromise(context)
           .request(requestOptions);
       }
 
@@ -126,7 +127,7 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
       const qs = querystring.stringify(edgeSessionParams);
       const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
 
-      return makeRequestPromisifier(context)
+      return makeRequestPromise(context)
         .request({
           url: urlWithParams,
           type: updatedOptions.method,

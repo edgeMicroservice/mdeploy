@@ -1,5 +1,7 @@
 const find = require('lodash/find');
 
+const { extractFromServiceType } = require('../../util/serviceNameHelper');
+
 const makeSessionMap = (context) => {
   let SESSION_KEYS_MAP;
   try {
@@ -10,14 +12,14 @@ const makeSessionMap = (context) => {
   if (!SESSION_KEYS_MAP) throw new Error('SESSION_KEYS_MAP env not assigned');
   if (!Array.isArray(SESSION_KEYS_MAP)) throw new Error('SESSION_KEYS_MAP env is not an array');
 
-  const currentProjectId = context.info.serviceType.substr(0, 36);
+  const { projectClientId } = extractFromServiceType(context.info.serviceType);
 
   const findBySessionId = (sessionId) => find(
     SESSION_KEYS_MAP, (map) => map.sessionId === sessionId,
   );
 
   const findByProject = (projectId) => find(
-    SESSION_KEYS_MAP, (map) => map.projectId === (projectId || currentProjectId),
+    SESSION_KEYS_MAP, (map) => map.projectId === (projectId || projectClientId),
   );
 
   return {

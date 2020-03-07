@@ -2,8 +2,9 @@ const Promise = require('bluebird');
 const find = require('lodash/find');
 const merge = require('lodash/merge');
 
-const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 const makeNodesHelper = require('../lib/nodesHelper');
+const { extractFromServiceType } = require('../util/serviceNameHelper');
+const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 
 const makeBatchOpsProcessor = (context) => {
   const createOperationRequest = (nodeId, serviceType, request, accessToken) => {
@@ -20,13 +21,7 @@ const makeBatchOpsProcessor = (context) => {
         const updatedRequestOptions = merge(requestOptions, serviceLink);
         updatedRequestOptions.url = `${updatedRequestOptions.url}${request.endpoint}`;
 
-        const outputOptions = updatedRequestOptions;
-        outputOptions.token = undefined;
-        if (outputOptions.headers && outputOptions.headers.Authorization) {
-          outputOptions.headers.Authorization = undefined;
-        }
-        const serviceNameVersion = serviceType.substr(37, serviceType.length);
-        const serviceName = serviceNameVersion.split('-')[0];
+        const { serviceName } = extractFromServiceType(serviceType);
         return rpAuth(serviceName, updatedRequestOptions, context)
           .then((result) => ({
             nodeId,
