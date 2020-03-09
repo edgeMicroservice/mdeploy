@@ -1,6 +1,6 @@
 const makeClientModel = require('../models/clientModel');
 
-const ACTIVATION_TAG = 'active';
+const { ACTIVATION_TAG } = require('../lib/common');
 
 const makeClientProcessor = (context) => {
   const updateClientStatus = (status, accessToken, expiresIn) => {

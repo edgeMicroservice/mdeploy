@@ -1,9 +1,7 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
 
 const makeClientProcessor = require('../processors/clientProcessor');
-
-const ACTIVATION_TAG = 'active';
-const DEACTIVATION_TAG = 'inactive';
+const { ACTIVATION_TAG, DEACTIVATION_TAG } = require('../lib/common');
 
 const updateClientStatus = (req, res) => {
   const { context, swagger } = req;
