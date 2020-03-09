@@ -1,0 +1,16 @@
+{
+  "name": "mdeploy-v1",
+  "image": "mdeploy-v1",
+  "env": {
+    "MCM.BASE_API_PATH": "/mdeploy/v1",
+    "MCM.WEBSOCKET_SUPPORT": "true",
+    "OAUTH_GENERIC_KEY": "--oauth-system-generic-public-key--",
+    "OAUTH_CLIENT_ID": "--oauth-client-id--",
+    "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
+    "SESSION_SECURITY_AUTHORIZATION_SET": "off",
+    "MST_URL": "http://localhost:8025/mST/v1",
+    "CUSTOMER_CODE": "--customer-code--",
+    "MDEPLOYMENYAGENT_URL": "http://localhost:8084/mdeploymentagent/v1",
+    "SESSION_KEYS_MAP": "[{\"sessionId\": \"--random-16-chars--\",\"sessionSecret\": \"--random-32-chars--\",\"projectId\": \"--project-client-id--\"}]"
+  }
+}
