@@ -11,6 +11,7 @@ const SecurityHandler = (req, definition, scopes, next) => {
 
   try {
     const payload = decodePayload(token);
+    console.log('===> payload', payload);
     if (!payload.iss || !payload.iss.includes('mID/v1')) {
       next(new Error('issuer not valid'));
     } else {
