@@ -32,6 +32,15 @@ const makeDeploymentHelper = (context) => {
       });
   };
 
+  const notifyApp = (messageBody) => {
+    const data = {};
+    data.type = 'deployImage';
+    data.message = JSON.stringify(messageBody);
+    context.dispatchWebSocketEvent(data);
+
+    return {};
+  };
+
   const deployImage = (nodeId, nodeUrl, imageId, accessToken) => {
     const { env } = context;
 
@@ -64,7 +73,10 @@ const makeDeploymentHelper = (context) => {
             },
           },
         };
-        return rpAuth('mdeploymentagent', options, context, false);
+
+        return options.url === 'ws://'
+          ? notifyApp(options.body)
+          : rpAuth('mdeploymentagent', options, context, false);
       });
   };
 
