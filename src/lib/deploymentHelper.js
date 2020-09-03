@@ -74,7 +74,7 @@ const makeDeploymentHelper = (context) => {
           },
         };
 
-        return options.url === 'ws://'
+        return env.MDEPLOYMENYAGENT_URL === 'ws://'
           ? notifyApp(options.body)
           : rpAuth('mdeploymentagent', options, context, false);
       });

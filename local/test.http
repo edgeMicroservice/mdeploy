@@ -54,8 +54,8 @@ Content-Type: application/json
 Authorization: Bearer {{edgeToken}}
 
 {
-    "nodeId": "bc8ebd2abf8398338c9f8a64cc6ffb14167601a684c953f3aac39c1d",
-    "imageId": "08d21dd7-c352-4729-9e80-373de80bd531-mdebug-v1"
+    "nodeId": "1d80503a96a893bec5a0dba50612b7dde2e438dd98793256bdd50a8f",
+    "imageId": "{{clientId}}-{{imagename}}-v1"
 }
 
 ####
@@ -66,3 +66,11 @@ Authorization: Bearer {{edgeToken}}
 {
   "status": "active"
 }
+
+###
+
+POST http://localhost:8083/jsonrpc/v1
+Content-Content-Type: application/json
+
+{"jsonrpc": "2.0", "method": "getMe", "params": ["{{edgeToken}}"], "id": 1}
+
