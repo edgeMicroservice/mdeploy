@@ -1,0 +1,68 @@
+###
+@host = http://localhost:8083
+@imagename = mdeploy
+####
+GET {{host}}/mcm/v1/images
+Authorization: bearer {{edgeToken}}
+
+####
+POST {{host}}/mcm/v1/images
+Content-Type: multipart/form-data; boundary=$Boundary$
+Authorization: Bearer {{edgeToken}}
+
+--$Boundary$
+Content-Disposition: form-data; name="image"; filename="{{imagename}}-v1.tar"
+
+< ../deploy/{{imagename}}-v1.tar
+--$Boundary$--
+
+
+####
+POST {{host}}/mcm/v1/containers
+Content-Type: application/json
+Authorization: Bearer {{edgeToken}}
+
+{
+  "env": {
+    "MCM.BASE_API_PATH": "/{{imagename}}/v1",
+    "MCM.WEBSOCKET_SUPPORT": "true",
+    "OAUTH_GENERIC_KEY": "--oauth-system-generic-public-key--",
+    "OAUTH_CLIENT_ID": "--oauth-client-id--",
+    "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
+    "SESSION_SECURITY_AUTHORIZATION_SET": "off",
+    "MST_URL": "http://localhost:8025/mST/v1",
+    "CUSTOMER_CODE": "--customer-code--",
+    "MDEPLOYMENYAGENT_URL": "ws://",
+    "SESSION_KEYS_MAP": "[{\"sessionId\": \"--random-16-chars--\",\"sessionSecret\": \"--random-32-chars--\",\"projectId\": \"--project-client-id--\"}]"
+  },
+  "id": "{{imagename}}-v1",
+  "image": "{{imagename}}-v1",
+  "imageId": "{{imagename}}-v1",
+  "name": "{{imagename}}-v1",
+  "state": "started"
+}
+
+###
+GET {{host}}/{{clientId}}/{{imagename}}/v1/images
+Content-Type: application/json
+Authorization: Bearer {{edgeToken}}
+
+
+####
+POST {{host}}/{{clientId}}/{{imagename}}/v1/images
+Content-Type: application/json
+Authorization: Bearer {{edgeToken}}
+
+{
+    "nodeId": "bc8ebd2abf8398338c9f8a64cc6ffb14167601a684c953f3aac39c1d",
+    "imageId": "08d21dd7-c352-4729-9e80-373de80bd531-mdebug-v1"
+}
+
+####
+PUT {{host}}/{{clientId}}/{{imagename}}/v1/clients
+Content-Type: application/json
+Authorization: Bearer {{edgeToken}}
+
+{
+  "status": "active"
+}
