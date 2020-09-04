@@ -38,7 +38,7 @@ const makeDeploymentHelper = (context) => {
     data.message = JSON.stringify(messageBody);
     context.dispatchWebSocketEvent(data);
 
-    return {};
+    return messageBody;
   };
 
   const deployImage = (nodeId, nodeUrl, imageId, accessToken) => {
@@ -57,6 +57,7 @@ const makeDeploymentHelper = (context) => {
           method: 'POST',
           body: {
             imageLink: {
+              nodeId,
               url: `${nodeUrl}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
               method: 'GET',
             },
