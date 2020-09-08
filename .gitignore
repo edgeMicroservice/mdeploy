@@ -64,3 +64,5 @@ deploy
 # Other temp files
 ~*
 local/start.json
+
+.DS_Store
