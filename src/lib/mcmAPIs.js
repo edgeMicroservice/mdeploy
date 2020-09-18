@@ -1,8 +1,9 @@
 const { rpAuth, SERVICE_CONSTANTS } = require('../lib/auth-helper');
 
-const MCM_URL = '127.0.0.1:8083/mcm/v1';
-
 const makeMcmAPIs = (context) => {
+  const { httpPort } = context.info;
+  const MCM_URL = `127.0.0.1:${httpPort}/mcm/v1`;
+
   const getCachedImages = (accessToken) => rpAuth(SERVICE_CONSTANTS.MCM, {
     url: `${MCM_URL}/images`,
     method: 'GET',

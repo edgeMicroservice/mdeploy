@@ -22,6 +22,8 @@ const makeImageProcessor = (context) => {
         const currentNode = find(nodes, (node) => node.id === context.info.nodeId);
         if (!currentNode) throw new Error(`Current node with id: ${context.info.nodeId} cannot be found`);
 
+        console.log(`targetNode: ${JSON.stringify(targetNode, null, 2)}`);
+        console.log(`currentNode: ${JSON.stringify(currentNode, null, 2)}`);
         if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
           return find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href;
         }
@@ -29,7 +31,7 @@ const makeImageProcessor = (context) => {
           .getBep(accessToken, newImage.nodeId, context.info.serviceType, BEP_ENDPOINT)
           .then((result) => result.href)
           .catch((err) => {
-            throw new Error(`Error occured while fetching BEP: ${err}`);
+            throw new Error(`Error occured while fetching BEP: ${JSON.stringify(err, null, 2)}`);
           });
       })
       .then((nodeUrl) => makeDeploymentHelper(context)
