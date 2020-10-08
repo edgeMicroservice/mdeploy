@@ -5,6 +5,7 @@ const makeNodesHelper = require('../lib/nodesHelper');
 const makeDeploymentHelper = require('../lib/deploymentHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
 const makeBepHelper = require('../lib/bepHelper');
+const { throwException } = require('../util/logHelper');
 
 const BEP_ENDPOINT = '/bep';
 
@@ -31,7 +32,8 @@ const makeImageProcessor = (context) => {
           .getBep(accessToken, newImage.nodeId, context.info.serviceType, BEP_ENDPOINT)
           .then((result) => result.href)
           .catch((err) => {
-            throw new Error(`Error occured while fetching BEP: ${JSON.stringify(err, null, 2)}`);
+            console.log('===> err', err);
+            throwException('Error occured while fetching BEP', err);
           });
       })
       .then((nodeUrl) => makeDeploymentHelper(context)

@@ -7,6 +7,7 @@ const { decodePayload } = require('../util/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
   // const { OAUTH_GENERIC_KEY } = req.context.env;
+  console.log('===> in SystemSecurity');
 
   const validateScopes = (scps, payload) => {
     const tokenScopes = payload.scope.split(' ');

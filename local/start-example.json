@@ -8,6 +8,7 @@
     "OAUTH_CLIENT_ID": "--oauth-client-id--",
     "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
     "SESSION_SECURITY_AUTHORIZATION_SET": "off",
+    "SERVER_SECURITY_SET": "off",
     "MST_URL": "http://localhost:8025/mST/v1",
     "CUSTOMER_CODE": "--customer-code--",
     "MDEPLOYMENYAGENT_URL": "http://localhost:8084/mdeploymentagent/v1",

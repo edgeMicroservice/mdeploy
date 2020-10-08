@@ -2,6 +2,8 @@ const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
 const { decodePayload } = require('../util/jwtHelper');
 
 const SecurityHandler = (req, definition, scopes, next) => {
+  console.log('===> in UserSecurity');
+
   if (!req.authorization) {
     next(new Error('authorization header is needed'));
     return;
@@ -11,7 +13,6 @@ const SecurityHandler = (req, definition, scopes, next) => {
 
   try {
     const payload = decodePayload(token);
-    console.log('===> payload', payload);
     if (!payload.iss || !payload.iss.includes('mID/v1')) {
       next(new Error('issuer not valid'));
     } else {

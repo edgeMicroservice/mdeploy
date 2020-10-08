@@ -7,6 +7,7 @@ const makeRequestPromise = require('./requestPromise');
 const makeSessionMap = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
 const { SERVICE_CONSTANTS } = require('./common');
+const { debugLog } = require('../../util/logHelper');
 
 const fetchTokenFromMST = (serviceType, context) => {
   const {
@@ -50,6 +51,11 @@ const makeHeaders = (auth, maps) => {
 };
 
 const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
+  debugLog('rpAuth called with', {
+    serviceObj,
+    options,
+  });
+
   let serviceType;
   let projectId;
   if (typeof serviceObj === 'string') {
@@ -62,13 +68,14 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
   const updatedOptions = options;
 
   return (() => {
-    if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM) {
+    if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM && context.env.SERVER_SECURITY_SET === 'on') {
       return fetchTokenFromMST(serviceType, context);
     }
     return Promise.resolve({});
   })()
     .then((tokenResult) => {
       if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
+        console.log('===> here 1');
         console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
         throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
       }
@@ -76,6 +83,7 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
 
       if (!encryptRequest || serviceType === SERVICE_CONSTANTS.MCM || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
+          console.log('===> here 2');
           console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
           throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
         }
