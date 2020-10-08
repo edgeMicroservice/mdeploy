@@ -1,15 +1,17 @@
 const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
 const { extractFromServiceType } = require('../util/serviceNameHelper');
 
-const JSONRPC_URL = 'http://127.0.0.1:8083/jsonrpc/v1';
 const JSONRPC_VERSION = '2.0';
 const JSONRPC_METHOD = 'getEdgeHmacCode';
-
-const MCM_URL = 'http://127.0.0.1:8083/mcm/v1';
 
 const HMAC_EXPIRES_IN = 60; // in seconds
 
 const makeDeploymentHelper = (context) => {
+  const { httpPort } = context.info;
+
+  const JSONRPC_URL = `http://127.0.0.1:${httpPort}/jsonrpc/v1`;
+  const MCM_URL = `http://127.0.0.1:${httpPort}/mcm/v1`;
+
   const generateHmac = (nodeId, imageId, accessToken) => {
     const options = {
       url: JSONRPC_URL,
@@ -32,6 +34,15 @@ const makeDeploymentHelper = (context) => {
       });
   };
 
+  const notifyApp = (messageBody) => {
+    const data = {};
+    data.type = 'deployImage';
+    data.message = JSON.stringify(messageBody);
+    context.dispatchWebSocketEvent(data);
+
+    return messageBody;
+  };
+
   const deployImage = (nodeId, nodeUrl, imageId, accessToken) => {
     const { env } = context;
 
@@ -48,6 +59,7 @@ const makeDeploymentHelper = (context) => {
           method: 'POST',
           body: {
             imageLink: {
+              nodeId,
               url: `${nodeUrl}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
               method: 'GET',
             },
@@ -64,7 +76,10 @@ const makeDeploymentHelper = (context) => {
             },
           },
         };
-        return rpAuth('mdeploymentagent', options, context, false);
+
+        return env.MDEPLOYMENYAGENT_URL === 'ws://'
+          ? notifyApp(options.body)
+          : rpAuth('mdeploymentagent', options, context, false);
       });
   };
 
