@@ -1,11 +1,23 @@
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
 const { decodePayload } = require('../util/jwtHelper');
+const { requestLog, debugLog } = require('../util/logHelper');
+
+const handlerName = 'User Security';
+
+const loggedNext = (next, error) => {
+  if (error) {
+    debugLog(`'${handlerName}' check failed`);
+  } else {
+    debugLog(`'${handlerName}' check successful`);
+  }
+  next();
+};
 
 const SecurityHandler = (req, definition, scopes, next) => {
-  console.log('===> in UserSecurity');
+  requestLog(handlerName, req);
 
   if (!req.authorization) {
-    next(new Error('authorization header is needed'));
+    loggedNext(next, new Error('authorization header is needed'));
     return;
   }
 
@@ -14,7 +26,7 @@ const SecurityHandler = (req, definition, scopes, next) => {
   try {
     const payload = decodePayload(token);
     if (!payload.iss || !payload.iss.includes('mID/v1')) {
-      next(new Error('issuer not valid'));
+      loggedNext(next, new Error('issuer not valid'));
     } else {
       req.context.security = {
         type: 'UserSecurity',
@@ -24,10 +36,10 @@ const SecurityHandler = (req, definition, scopes, next) => {
           payload,
         },
       };
-      next();
+      loggedNext(next);
     }
   } catch (e) {
-    next(new Error(`invalid token: ${e.message}`));
+    loggedNext(next, new Error(`invalid token: ${e.message}`));
   }
 };
 

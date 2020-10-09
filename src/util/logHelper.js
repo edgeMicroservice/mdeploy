@@ -1,28 +1,61 @@
+const logType = {
+  ERROR: 'Error',
+  DEBUG: 'Debug',
+};
+
+const log = (type, message, info) => {
+  if (!info) {
+    console.log(`\n \n##### ${type}: ${message}`, '\n \n');
+  } else if (typeof info === 'object') {
+    console.log(`\n \n##### ${type}: ${message}\n`, `\n${JSON.stringify(info, null, 2)}`, '\n \n');
+  } else {
+    console.log(`\n \n##### ${type}: ${message}:`, info, '\n \n');
+  }
+};
+
 const throwException = (message, error) => {
-  console.log(`Error:\n \n${message}:`, error, '\n \n');
+  log(logType.ERROR, message, error);
 
   if (!error) {
     throw new Error(message);
   }
 
   let errorMessage = message;
-  if (typeof error === 'object') {
+  if (typeof error === 'object' && Object.keys(error).length > 0) {
     errorMessage += `: ${JSON.stringify(error)}`;
   } else {
-    errorMessage += `: ${error}}`;
+    errorMessage += `: ${error}`;
   }
   throw new Error(errorMessage);
 };
 
 const debugLog = (message, info) => {
-  if (!info) {
-    console.log(`Debug:\n \n${message}`, '\n \n');
-  } else {
-    console.log(`Debug:\n \n${message}:`, info, '\n \n');
+  log(logType.DEBUG, message, info);
+};
+
+let isLogged = false;
+const requestLog = (securityHandler, req) => {
+  const {
+    method,
+    url,
+    body,
+    authorization,
+  } = req;
+  if (!isLogged) {
+    log(logType.DEBUG, 'Received Request', {
+      method,
+      url,
+      body,
+      authorization,
+      env: req.context.env,
+    });
   }
+  isLogged = true;
+  log(logType.DEBUG, `In '${securityHandler}' handler`);
 };
 
 module.exports = {
   debugLog,
+  requestLog,
   throwException,
 };

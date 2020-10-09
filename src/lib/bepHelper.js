@@ -31,10 +31,6 @@ const makeBepHelper = (context) => {
           updatedRequestOptions.url = `${updatedRequestOptions.url}${endpoint}`;
           const { serviceName } = extractFromServiceType(serviceType);
           return rpAuth(serviceName, updatedRequestOptions, context, true);
-        })
-        .catch((error) => {
-          console.log('===> error this', error);
-          throw error;
         });
     });
 

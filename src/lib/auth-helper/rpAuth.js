@@ -7,7 +7,7 @@ const makeRequestPromise = require('./requestPromise');
 const makeSessionMap = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
 const { SERVICE_CONSTANTS } = require('./common');
-const { debugLog } = require('../../util/logHelper');
+const { debugLog, throwException } = require('../../util/logHelper');
 
 const fetchTokenFromMST = (serviceType, context) => {
   const {
@@ -50,8 +50,16 @@ const makeHeaders = (auth, maps) => {
   return headers;
 };
 
+let requestSent = false;
+
+const sendRequest = (context, requestObj) => {
+  requestSent = true;
+  return makeRequestPromise(context)
+    .request(requestObj);
+};
+
 const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
-  debugLog('rpAuth called with', {
+  debugLog('Sending request', {
     serviceObj,
     options,
   });
@@ -75,17 +83,19 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
   })()
     .then((tokenResult) => {
       if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
-        console.log('===> here 1');
-        console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-        throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+        throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
+          error: tokenResult.error.message,
+          SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
+        });
       }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
       if (!encryptRequest || serviceType === SERVICE_CONSTANTS.MCM || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
-          console.log('===> here 2');
-          console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-          throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+          throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
+            error: tokenResult.error.message,
+            SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
+          });
         }
         let url = updatedOptions.url || updatedOptions.uri;
         const qs = querystring.stringify(updatedOptions.qs);
@@ -111,12 +121,14 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
             requestOptions.authorization, additionalHeaders,
           );
         }
-        return makeRequestPromise(context)
-          .request(requestOptions);
+        return sendRequest(context, requestOptions);
       }
 
+      // if (context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
+
+      // }
       const keyMap = makeSessionMap(context).findByProject(projectId);
-      if (!keyMap) throw new Error(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
+      if (!keyMap) throwException(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
 
       let url = updatedOptions.url || updatedOptions.uri;
       if (url.includes('?')) {
@@ -135,11 +147,20 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
       const qs = querystring.stringify(edgeSessionParams);
       const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
 
-      return makeRequestPromise(context)
-        .request({
-          url: urlWithParams,
-          type: updatedOptions.method,
-        });
+      return sendRequest(context, {
+        url: urlWithParams,
+        type: updatedOptions.method,
+      });
+    })
+    .catch((error) => {
+      if (!requestSent) throwException('Sending request failed', error);
+      throwException('Failure response received', error);
+    })
+    .then((data) => {
+      // For JsonRPC
+      if (data && data.error) throwException('Failure response received', { error: data.error });
+      debugLog('Success response received', data);
+      return data;
     });
 };
 

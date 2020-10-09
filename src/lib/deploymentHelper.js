@@ -1,5 +1,6 @@
 const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
 const { extractFromServiceType } = require('../util/serviceNameHelper');
+const { throwException } = require('../util/logHelper');
 
 const JSONRPC_VERSION = '2.0';
 const JSONRPC_METHOD = 'getEdgeHmacCode';
@@ -10,7 +11,6 @@ const makeDeploymentHelper = (context) => {
   const { httpPort } = context.info;
 
   const JSONRPC_URL = `http://127.0.0.1:${httpPort}/jsonrpc/v1`;
-  const MCM_URL = `http://127.0.0.1:${httpPort}/mcm/v1`;
 
   const generateHmac = (nodeId, imageId, accessToken) => {
     const options = {
@@ -29,7 +29,7 @@ const makeDeploymentHelper = (context) => {
     };
     return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
       .then((response) => {
-        if (response.error) throw new Error(response.error);
+        if (response.error) throwException('Error occured while generating hmac', response.error);
         return response.result.edgeHmacCode;
       });
   };
@@ -43,14 +43,13 @@ const makeDeploymentHelper = (context) => {
     return messageBody;
   };
 
-  const deployImage = (nodeId, nodeUrl, imageId, accessToken) => {
+  const deployImage = (nodeId, targetNodeLocalHref, targetNodeHref, imageId, accessToken) => {
     const { env } = context;
+    const MCM_URL = `${targetNodeLocalHref}/mcm/v1`;
 
     return generateHmac(nodeId, imageId, accessToken)
-      .catch((err) => {
-        const error = err;
-        error.message = `cannot generate hmac: ${err.message}`;
-        throw new Error(error);
+      .catch((error) => {
+        throwException('cannot generate hmac', error);
       })
       .then((hmac) => {
         const { serviceName, serviceVersion } = extractFromServiceType(imageId);
@@ -60,7 +59,7 @@ const makeDeploymentHelper = (context) => {
           body: {
             imageLink: {
               nodeId,
-              url: `${nodeUrl}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
+              url: `${targetNodeHref}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
               method: 'GET',
             },
             deploymentLink: {
