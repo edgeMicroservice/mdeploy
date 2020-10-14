@@ -24,26 +24,19 @@ const makeBatchOpsProcessor = (context) => {
 
         const { serviceName } = extractFromServiceType(serviceType);
 
-        console.log('===> calling rp auth');
         return rpAuth(serviceName, updatedRequestOptions, context)
-          .then((result) => {
-            console.log('===> result', result);
-            return {
-              nodeId,
-              serviceType,
-              responseType: 'success',
-              responseBody: result,
-            };
-          })
-          .catch((err) => {
-            console.log('===> err', err);
-            return {
-              nodeId,
-              serviceType,
-              responseType: 'failure',
-              responseBody: err,
-            };
-          });
+          .then((result) => ({
+            nodeId,
+            serviceType,
+            responseType: 'success',
+            responseBody: result,
+          }))
+          .catch((err) => ({
+            nodeId,
+            serviceType,
+            responseType: 'failure',
+            responseBody: err,
+          }));
       });
   };
 
