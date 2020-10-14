@@ -11,6 +11,7 @@ const getContainers = (req, res) => {
 };
 
 const postContainer = (req, res) => {
+  console.log('===> post container');
   const { context, swagger } = req;
 
   makeContainerProcessor(context)

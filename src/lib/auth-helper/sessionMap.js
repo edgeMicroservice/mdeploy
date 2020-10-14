@@ -19,9 +19,15 @@ const makeSessionMap = (context) => {
     SESSION_KEYS_MAP, (map) => map.sessionId === sessionId,
   );
 
-  const findByProject = (projectId) => find(
-    SESSION_KEYS_MAP, (map) => map.projectId === (projectId || projectClientId),
-  );
+  const findByProject = (projectId) => {
+    const projectSessionMap = find(
+      SESSION_KEYS_MAP, (map) => map.projectId === (projectId || projectClientId),
+    );
+    if (projectSessionMap) return projectSessionMap;
+    return find(
+      SESSION_KEYS_MAP, (map) => map.projectId === 'common',
+    );
+  };
 
   return {
     findBySessionId,

@@ -82,18 +82,23 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
     return Promise.resolve({});
   })()
     .then((tokenResult) => {
-      if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
+      if (tokenResult.error && context.env.SERVER_SECURITY_SET === 'on') {
         throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
           error: tokenResult.error.message,
+          SERVER_SECURITY_SET: context.env.SERVER_SECURITY_SET,
           SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
         });
       }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
-      if (!encryptRequest || serviceType === SERVICE_CONSTANTS.MCM || (options.headers && options.headers['x-mimik-routing'])) {
+      if (context.env.SESSION_SECURITY_AUTHORIZATION_SET === 'off'
+          || !encryptRequest
+          || serviceType === SERVICE_CONSTANTS.MCM
+          || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
           throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
             error: tokenResult.error.message,
+            SERVER_SECURITY_SET: context.env.SERVER_SECURITY_SET,
             SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
           });
         }
@@ -124,9 +129,6 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
         return sendRequest(context, requestOptions);
       }
 
-      // if (context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
-
-      // }
       const keyMap = makeSessionMap(context).findByProject(projectId);
       if (!keyMap) throwException(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
 

@@ -34,7 +34,7 @@ const debugLog = (message, info) => {
 };
 
 let isLogged = false;
-const requestLog = (securityHandler, req) => {
+const middlewareRequestLog = (handlerName, req) => {
   const {
     method,
     url,
@@ -51,11 +51,22 @@ const requestLog = (securityHandler, req) => {
     });
   }
   isLogged = true;
-  log(logType.DEBUG, `In '${securityHandler}' handler`);
+  log(logType.DEBUG, `In '${handlerName}' handler`);
+};
+
+const middlewareLoggedNext = (handlerName, next, error) => {
+  if (error) {
+    debugLog(`'${handlerName}' failed`);
+    next(error);
+  } else {
+    debugLog(`'${handlerName}' passed`);
+    next();
+  }
 };
 
 module.exports = {
   debugLog,
-  requestLog,
   throwException,
+  middlewareRequestLog,
+  middlewareLoggedNext,
 };

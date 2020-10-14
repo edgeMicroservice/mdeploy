@@ -1,5 +1,5 @@
 const makeTokenSelector = require('../lib/tokenSelector');
-const makeNodeModel = require('../models/nodeModel');
+const makeNodesHelper = require('../lib/nodesHelper');
 
 const { decodePayload } = require('../lib/jwtHelper');
 
@@ -7,7 +7,7 @@ const makeNodeProcessor = (context) => {
   const { security } = context;
 
   const getNodes = () => makeTokenSelector(context).selectUserToken()
-    .then((edgeAccessToken) => makeNodeModel(context).findByAccount(edgeAccessToken)
+    .then((edgeAccessToken) => makeNodesHelper(context).findByAccount(edgeAccessToken)
       .then((nodes) => {
         if (security.type === 'EdgeDeploymentSecurity') return nodes;
         const accountId = decodePayload(edgeAccessToken).sub;
