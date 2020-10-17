@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
 const querystring = require('query-string');
+const keys = require('lodash/keys');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
 
@@ -38,7 +39,7 @@ const makeHeaders = (auth, maps) => {
   const DELI = '\r\n';
   let headers = auth;
 
-  Object.keys(maps).forEach((key) => {
+  keys(maps).forEach((key) => {
     const value = maps[key];
     if (headers) {
       headers = `${headers}${DELI}${key}: ${value}`;

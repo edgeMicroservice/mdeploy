@@ -1,24 +1,28 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
 
 const makeClientProcessor = require('../processors/clientProcessor');
-const { ACTIVATION_TAG, DEACTIVATION_TAG } = require('../lib/common');
 
 const updateClientStatus = (req, res) => {
   const { context, swagger } = req;
-  const { jwt, payload } = context.security.token;
   const { status } = swagger.params.newClientStatus;
-  const expiresIn = payload.exp - payload.iat;
 
-  makeClientProcessor(context)
-    .updateClientStatus(status, jwt, expiresIn)
-    .then(() => {
-      const responseObj = status === ACTIVATION_TAG ? {
-        status: ACTIVATION_TAG,
-        inactiveAfter: payload.exp,
-      } : {
-        status: DEACTIVATION_TAG,
-      };
-      response.sendResult(responseObj, 200, res);
+  return makeClientProcessor(context)
+    .updateClientStatus(status)
+    .then((result) => {
+      response.sendResult(result, 200, res);
+    })
+    .catch((err) => {
+      response.sendError(err, res, 400);
+    });
+};
+
+const getClientStatus = (req, res) => {
+  const { context } = req;
+
+  return makeClientProcessor(context)
+    .getClientStatus()
+    .then((result) => {
+      response.sendResult(result, 200, res);
     })
     .catch((err) => {
       response.sendError(err, res, 400);
@@ -26,5 +30,6 @@ const updateClientStatus = (req, res) => {
 };
 
 module.exports = {
+  getClientStatus,
   updateClientStatus,
 };

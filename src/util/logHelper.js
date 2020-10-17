@@ -1,3 +1,5 @@
+const _ = require('lodash');
+
 const logType = {
   ERROR: 'Error',
   DEBUG: 'Debug',
@@ -21,7 +23,7 @@ const throwException = (message, error) => {
   }
 
   let errorMessage = message;
-  if (typeof error === 'object' && Object.keys(error).length > 0) {
+  if (typeof error === 'object' && _.keys(error).length > 0) {
     errorMessage += `: ${JSON.stringify(error)}`;
   } else {
     errorMessage += `: ${error}`;
