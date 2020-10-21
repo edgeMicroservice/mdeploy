@@ -21,11 +21,7 @@ const throwException = (message, error) => {
   }
 
   let errorMessage = message;
-  if (typeof error === 'object' && error.keys().length > 0) {
-    errorMessage += `: ${JSON.stringify(error)}`;
-  } else {
-    errorMessage += `: ${error}`;
-  }
+  errorMessage += `: ${JSON.stringify(error)}`;
   throw new Error(errorMessage);
 };
 

@@ -1,5 +1,4 @@
 const Promise = require('bluebird');
-const _ = require('lodash');
 
 const TOKEN_TAG = 'token';
 
@@ -30,7 +29,7 @@ const makeClientModel = (context) => {
   const fetchClientTokenData = () => {
     const clientTokenStr = storage.getItem(TOKEN_TAG);
     const clientTokenData = !clientTokenStr || clientTokenStr === '' ? {} : JSON.parse(clientTokenStr);
-    if (_.keys(clientTokenData).length > 0 && clientTokenData.expiresAt > Date.now()) {
+    if (clientTokenData.expiresAt > Date.now()) {
       return Promise.resolve(clientTokenData);
     }
     return Promise.resolve({});
