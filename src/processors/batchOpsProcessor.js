@@ -30,14 +30,14 @@ const makeBatchOpsProcessor = (context) => {
             serviceType,
             responseType: 'success',
             responseBody: result,
-          }))
-          .catch((err) => ({
-            nodeId,
-            serviceType,
-            responseType: 'failure',
-            responseBody: err,
           }));
-      });
+      })
+      .catch((err) => ({
+        nodeId,
+        serviceType,
+        responseType: 'failure',
+        responseBody: err,
+      }));
   };
 
   const createBatchOp = (batchOp, reqAccessToken) => (() => {

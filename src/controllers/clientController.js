@@ -8,8 +8,8 @@ const updateClientStatus = (req, res) => {
 
   return makeClientProcessor(context)
     .updateClientStatus(status)
-    .then((result) => {
-      response.sendResult(result, 200, res);
+    .then((data) => {
+      response.sendResult({ data }, 200, res);
     })
     .catch((err) => {
       response.sendError(err, res, 400);
@@ -21,8 +21,8 @@ const getClientStatus = (req, res) => {
 
   return makeClientProcessor(context)
     .getClientStatus()
-    .then((result) => {
-      response.sendResult(result, 200, res);
+    .then((data) => {
+      response.sendResult({ data }, 200, res);
     })
     .catch((err) => {
       response.sendError(err, res, 400);
