@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
 const querystring = require('query-string');
+const keys = require('lodash/keys');
 const merge = require('lodash/merge');
 const keysIn = require('lodash/keysIn');
 
@@ -7,6 +8,7 @@ const makeRequestPromise = require('./requestPromise');
 const makeSessionMap = require('./sessionMap');
 const { encrypt } = require('./encryptionHelper');
 const { SERVICE_CONSTANTS } = require('./common');
+const { debugLog, throwException } = require('../../util/logHelper');
 
 const fetchTokenFromMST = (serviceType, context) => {
   const {
@@ -37,7 +39,7 @@ const makeHeaders = (auth, maps) => {
   const DELI = '\r\n';
   let headers = auth;
 
-  Object.keys(maps).forEach((key) => {
+  keys(maps).forEach((key) => {
     const value = maps[key];
     if (headers) {
       headers = `${headers}${DELI}${key}: ${value}`;
@@ -49,7 +51,20 @@ const makeHeaders = (auth, maps) => {
   return headers;
 };
 
+let requestSent = false;
+
+const sendRequest = (context, requestObj) => {
+  requestSent = true;
+  return makeRequestPromise(context)
+    .request(requestObj);
+};
+
 const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
+  debugLog('Sending request', {
+    serviceObj,
+    options,
+  });
+
   let serviceType;
   let projectId;
   if (typeof serviceObj === 'string') {
@@ -62,22 +77,31 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
   const updatedOptions = options;
 
   return (() => {
-    if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM) {
+    if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM && context.env.SERVER_SECURITY_SET === 'on') {
       return fetchTokenFromMST(serviceType, context);
     }
     return Promise.resolve({});
   })()
     .then((tokenResult) => {
-      if (tokenResult.error && context.env.SESSION_SECURITY_AUTHORIZATION_SET !== 'on') {
-        console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-        throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+      if (tokenResult.error && context.env.SERVER_SECURITY_SET === 'on') {
+        throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
+          error: tokenResult.error.message,
+          SERVER_SECURITY_SET: context.env.SERVER_SECURITY_SET,
+          SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
+        });
       }
       if (tokenResult.token) updatedOptions.token = tokenResult.token;
 
-      if (!encryptRequest || serviceType === SERVICE_CONSTANTS.MCM || (options.headers && options.headers['x-mimik-routing'])) {
+      if (context.env.SESSION_SECURITY_AUTHORIZATION_SET === 'off'
+          || !encryptRequest
+          || serviceType === SERVICE_CONSTANTS.MCM
+          || (options.headers && options.headers['x-mimik-routing'])) {
         if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
-          console.log(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
-          throw new Error(`cannot fetch mST token for serviceType: ${serviceType}, error: ${tokenResult.error.message}`);
+          throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
+            error: tokenResult.error.message,
+            SERVER_SECURITY_SET: context.env.SERVER_SECURITY_SET,
+            SESSION_SECURITY_AUTHORIZATION_SET: context.env.SESSION_SECURITY_AUTHORIZATION_SET,
+          });
         }
         let url = updatedOptions.url || updatedOptions.uri;
         const qs = querystring.stringify(updatedOptions.qs);
@@ -103,12 +127,11 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
             requestOptions.authorization, additionalHeaders,
           );
         }
-        return makeRequestPromise(context)
-          .request(requestOptions);
+        return sendRequest(context, requestOptions);
       }
 
       const keyMap = makeSessionMap(context).findByProject(projectId);
-      if (!keyMap) throw new Error(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
+      if (!keyMap) throwException(projectId ? `could not find session key for projectId: ${projectId}` : 'could not find session key for current project');
 
       let url = updatedOptions.url || updatedOptions.uri;
       if (url.includes('?')) {
@@ -127,11 +150,20 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
       const qs = querystring.stringify(edgeSessionParams);
       const urlWithParams = url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
 
-      return makeRequestPromise(context)
-        .request({
-          url: urlWithParams,
-          type: updatedOptions.method,
-        });
+      return sendRequest(context, {
+        url: urlWithParams,
+        type: updatedOptions.method,
+      });
+    })
+    .catch((error) => {
+      if (!requestSent) throwException('Sending request failed', error);
+      throwException('Failure response received', error);
+    })
+    .then((data) => {
+      // For JsonRPC
+      if (data && data.error) throwException('Failure response received', { error: data.error });
+      debugLog('Success response received', data);
+      return data;
     });
 };
 

@@ -3,6 +3,7 @@ const find = require('lodash/find');
 const merge = require('lodash/merge');
 
 const makeNodesHelper = require('../lib/nodesHelper');
+const makeTokenSelector = require('../lib/tokenSelector');
 const { extractFromServiceType } = require('../util/serviceNameHelper');
 const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 
@@ -12,7 +13,7 @@ const makeBatchOpsProcessor = (context) => {
       method: request.method,
     };
     if (request.qs) requestOptions.qs = request.qs;
-    if (request.body) requestOptions.data = request.body;
+    if (request.body) requestOptions.body = request.body;
     if (request.token) requestOptions.token = request.token;
     if (request.headers) requestOptions.headers = request.headers;
 
@@ -22,33 +23,38 @@ const makeBatchOpsProcessor = (context) => {
         updatedRequestOptions.url = `${updatedRequestOptions.url}${request.endpoint}`;
 
         const { serviceName } = extractFromServiceType(serviceType);
+
         return rpAuth(serviceName, updatedRequestOptions, context)
           .then((result) => ({
             nodeId,
             serviceType,
             responseType: 'success',
             responseBody: result,
-          }))
-          .catch((err) => ({
-            nodeId,
-            serviceType,
-            responseType: 'failure',
-            responseBody: err,
           }));
-      });
+      })
+      .catch((err) => ({
+        nodeId,
+        serviceType,
+        responseType: 'failure',
+        responseBody: err,
+      }));
   };
 
-  const createBatchOp = (batchOp, accessToken) => makeNodesHelper(context)
-    .findByAccount(accessToken)
-    .then((nodes) => {
-      const { serviceType } = context.info;
-      const operationsPromises = batchOp.nodes.map((id) => {
-        const selectedNode = find(nodes, (node) => node.id === id);
-        if (!selectedNode) throw new Error(`cannot create batch operation. node with id: ${id} cannot be found`);
-        return createOperationRequest(id, serviceType, batchOp.request, accessToken);
-      });
-      return Promise.all(operationsPromises);
-    });
+  const createBatchOp = (batchOp, reqAccessToken) => (() => {
+    if (reqAccessToken) return Promise.resolve(reqAccessToken);
+    return makeTokenSelector(context).selectUserToken();
+  })()
+    .then((accessToken) => makeNodesHelper(context)
+      .findByAccount(accessToken)
+      .then((nodes) => {
+        const { serviceType } = context.info;
+        const operationsPromises = batchOp.nodes.map((id) => {
+          const selectedNode = find(nodes, (node) => node.id === id);
+          if (!selectedNode) throw new Error(`cannot create batch operation. node with id: ${id} cannot be found`);
+          return createOperationRequest(id, serviceType, batchOp.request, accessToken);
+        });
+        return Promise.all(operationsPromises);
+      }));
 
   return {
     createBatchOp,

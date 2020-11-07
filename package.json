@@ -2,7 +2,7 @@
   "name": "mdeploy",
   "version": "1.0.0",
   "description": "",
-  "author": "mimik",
+  "author": "mimik technology inc <support@mimik.com> (https://developer.mimik.com/)",
   "license": "MIT",
   "main": "index.js",
   "type": "mdeploy",
@@ -29,9 +29,9 @@
     "router": "1.3.4"
   },
   "devDependencies": {
-    "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#v1.0.0",
-    "@mimik/swagger-mw-codegen": "1.1.3",
-    "@mimik/edge-ms-packager": "1.0.1",
+    "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#EDGEMS-322-make-mdeploy-support-image-po",
+    "@mimik/swagger-mw-codegen": "bitbucket:mimiktech/swagger-mw-codegen#3b38b36",
+    "@mimik/edge-ms-packager": "^1.0.2",
     "@babel/core": "7.8.7",
     "@babel/preset-env": "7.8.7",
     "babel-eslint": "10.1.0",

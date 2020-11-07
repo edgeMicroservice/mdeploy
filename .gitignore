@@ -66,3 +66,4 @@ deploy
 local/start.json
 
 .DS_Store
+package-lock.json

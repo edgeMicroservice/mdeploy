@@ -5,6 +5,7 @@ const makeNodesHelper = require('../lib/nodesHelper');
 const makeDeploymentHelper = require('../lib/deploymentHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
 const makeBepHelper = require('../lib/bepHelper');
+const { debugLog, throwException } = require('../util/logHelper');
 
 const BEP_ENDPOINT = '/bep';
 
@@ -17,25 +18,34 @@ const makeImageProcessor = (context) => {
       .findByAccount(accessToken)
       .then((nodes) => {
         const targetNode = find(nodes, (node) => node.id === newImage.nodeId);
-        if (!targetNode) throw new Error(`Target node with id: ${newImage.nodeId} cannot be found`);
+        if (!targetNode) throwException('Target node cannot be found', { nodeId: newImage.nodeId });
 
         const currentNode = find(nodes, (node) => node.id === context.info.nodeId);
-        if (!currentNode) throw new Error(`Current node with id: ${context.info.nodeId} cannot be found`);
+        if (!currentNode) throwException('Current node cannot be found', { nodeId: context.info.nodeId });
 
-        console.log(`targetNode: ${JSON.stringify(targetNode, null, 2)}`);
-        console.log(`currentNode: ${JSON.stringify(currentNode, null, 2)}`);
+        debugLog('Found targetNode', targetNode);
+        debugLog('Found currentNode', currentNode);
+
+        const targetNodeLocalHref = find(currentNode.addresses, (address) => address.type === 'local').url.href;
+
         if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
-          return find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href;
+          return {
+            targetNodeLocalHref,
+            targetNodeHref: find(targetNode.addresses, (currentAddress) => currentAddress.type === 'local').url.href,
+          };
         }
         return makeBepHelper(context)
           .getBep(accessToken, newImage.nodeId, context.info.serviceType, BEP_ENDPOINT)
-          .then((result) => result.href)
+          .then((targetNodeUrl) => ({
+            targetNodeLocalHref,
+            targetNodeHref: targetNodeUrl.href,
+          }))
           .catch((err) => {
-            throw new Error(`Error occured while fetching BEP: ${JSON.stringify(err, null, 2)}`);
+            throwException('Error occured while fetching BEP', err);
           });
       })
-      .then((nodeUrl) => makeDeploymentHelper(context)
-        .deployImage(newImage.nodeId, nodeUrl, newImage.imageId, accessToken)));
+      .then(({ targetNodeLocalHref, targetNodeHref }) => makeDeploymentHelper(context)
+        .deployImage(newImage.nodeId, targetNodeLocalHref, targetNodeHref, newImage.imageId, accessToken)));
 
   const getImages = () => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)

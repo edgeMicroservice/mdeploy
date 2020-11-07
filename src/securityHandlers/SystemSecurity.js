@@ -1,12 +1,27 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const find = require('lodash/find');
 
 const { extractToken } = require('@mimik/edge-ms-helper/authorization-helper');
 
 const { decodePayload } = require('../util/jwtHelper');
+const { middlewareRequestLog, middlewareLoggedNext } = require('../util/logHelper');
+
+const handlerName = 'System Security';
 
 const SecurityHandler = (req, definition, scopes, next) => {
-  const { OAUTH_GENERIC_KEY } = req.context.env;
+  const {
+    // OAUTH_GENERIC_KEY,
+    SERVER_SECURITY_SET,
+  } = req.context.env;
+  middlewareRequestLog(handlerName, req);
+
+  const throwError = (error) => {
+    if (SERVER_SECURITY_SET === 'off') {
+      middlewareLoggedNext(handlerName, next);
+    } else {
+      middlewareLoggedNext(handlerName, next, error);
+    }
+  };
 
   const validateScopes = (scps, payload) => {
     const tokenScopes = payload.scope.split(' ');
@@ -23,7 +38,7 @@ const SecurityHandler = (req, definition, scopes, next) => {
       const token = extractToken(req.authorization);
       const payload = decodePayload(token);
 
-      jwt.verify(token, OAUTH_GENERIC_KEY);
+      // jwt.verify(token, OAUTH_GENERIC_KEY);
       validateScopes(scopes, payload);
 
       req.context.security = {
@@ -34,18 +49,18 @@ const SecurityHandler = (req, definition, scopes, next) => {
           payload,
         },
       };
-      next();
+      middlewareLoggedNext(handlerName, next);
     } catch (e) {
-      next(new Error(`invalid token: ${e.message}`));
+      throwError(new Error(`invalid token: ${e.message}`));
     }
   } else if (req.securityMiddleware === 'esession' && req.context.env.SESSION_SECURITY_AUTHORIZATION_SET === 'on') {
     req.context.security = {
       type: 'SystemSecurity',
       issuer: 'MES',
     };
-    next();
+    middlewareLoggedNext(handlerName, next);
   } else {
-    next(new Error('authorization header is needed'));
+    throwError(new Error('authorization header is needed'));
   }
 };
 
