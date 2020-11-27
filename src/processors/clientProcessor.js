@@ -15,13 +15,13 @@ const makeClientProcessor = (context) => {
 
     if (status === ACTIVATION_TAG) {
       const { jwt, payload } = context.security.token;
-      const expiresIn = payload.exp - payload.iat;
+      const expiresAt = payload.exp * 1000; // Compare to Date.now() needs milliseconds.
 
       return makeClientModel(context)
-        .saveClientToken(jwt, Date.now() + expiresIn)
+        .saveClientToken(jwt, expiresAt)
         .then(() => ({
           status: ACTIVATION_TAG,
-          inactiveAfter: Date.now() + expiresIn,
+          inactiveAfter: expiresAt,
         }));
     }
     return makeClientModel(context)
