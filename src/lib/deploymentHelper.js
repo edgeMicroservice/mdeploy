@@ -1,5 +1,4 @@
 const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
-const { extractFromServiceType } = require('../util/serviceNameHelper');
 const { throwException } = require('../util/logHelper');
 
 const JSONRPC_VERSION = '2.0';
@@ -43,43 +42,42 @@ const makeDeploymentHelper = (context) => {
     return messageBody;
   };
 
-  const deployImage = (nodeId, targetNodeLocalHref, targetNodeHref, imageId, accessToken) => {
+  const deployImage = (nodeId, imageId, imageUrl, targetNodeLocalHref, targetNodeHref, accessToken) => {
     const { env } = context;
     const MCM_URL = `${targetNodeLocalHref}/mcm/v1`;
+
+    const callDeploymentAgent = (hmac) => {
+      const options = {
+        url: `${env.MDEPLOYMENYAGENT_URL}/images`,
+        method: 'POST',
+        body: {
+          imageLink: {
+            url: imageUrl || `${targetNodeHref}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
+            method: 'GET',
+          },
+          deploymentLink: {
+            url: `${MCM_URL}/images`,
+            method: 'POST',
+            headers: {
+              Authorization: `bearer ${accessToken}`,
+            },
+          },
+        },
+      };
+      return env.MDEPLOYMENYAGENT_URL === 'ws://'
+        ? notifyApp(options.body)
+        : rpAuth('mdeploymentagent', options, context, false);
+    };
+
+    if (imageUrl) {
+      return callDeploymentAgent('');
+    }
 
     return generateHmac(nodeId, imageId, accessToken)
       .catch((error) => {
         throwException('cannot generate hmac', error);
       })
-      .then((hmac) => {
-        const { serviceName, serviceVersion } = extractFromServiceType(imageId);
-        const options = {
-          url: `${env.MDEPLOYMENYAGENT_URL}/images`,
-          method: 'POST',
-          body: {
-            imageLink: {
-              nodeId,
-              url: `${targetNodeHref}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
-              method: 'GET',
-            },
-            deploymentLink: {
-              url: `${MCM_URL}/images`,
-              method: 'POST',
-              headers: {
-                Authorization: `bearer ${accessToken}`,
-              },
-            },
-            service: {
-              name: serviceName,
-              version: serviceVersion,
-            },
-          },
-        };
-
-        return env.MDEPLOYMENYAGENT_URL === 'ws://'
-          ? notifyApp(options.body)
-          : rpAuth('mdeploymentagent', options, context, false);
-      });
+      .then((hmac) => callDeploymentAgent(hmac));
   };
 
   return {

@@ -1,9 +1,11 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
-
 const makeImageProcessor = require('../processors/imageProcessor');
+const { checkNewImageParams } = require('../util/requestValidator');
 
 const postImage = (req, res) => {
   const { context, swagger } = req;
+
+  checkNewImageParams(res, swagger.params.newImage);
 
   makeImageProcessor(context)
     .postImage(swagger.params.newImage)
