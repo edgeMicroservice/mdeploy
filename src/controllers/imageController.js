@@ -5,11 +5,11 @@ const { checkNewImageParams } = require('../util/requestValidator');
 const postImage = (req, res) => {
   const { context, swagger } = req;
 
-  checkNewImageParams(res, swagger.params.newImage);
-
-  makeImageProcessor(context)
-    .postImage(swagger.params.newImage)
-    .then((result) => response.sendResult(result, 201, res))
+  checkNewImageParams(swagger.params.newImage)
+    .then(() => makeImageProcessor(context)
+      .postImage(swagger.params.newImage)
+      .then((result) => response.sendResult(result, 201, res))
+      .catch((err) => response.sendError(err, res, 400)))
     .catch((err) => response.sendError(err, res, 400));
 };
 

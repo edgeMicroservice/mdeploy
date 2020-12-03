@@ -1,12 +1,15 @@
-const response = require('@mimik/edge-ms-helper/response-helper');
+const Promise = require('bluebird');
 
-const checkNewImageParams = (res, newImage) => {
+const checkNewImageParams = (newImage) => {
   const { imageHostNodeId, imageUrl, imageId } = newImage;
-  if (imageUrl && imageHostNodeId) {
-    response.sendError(Error('Provide either imageUrl or imageHostNodeId but not both.'), res, 400);
+  if (!imageUrl && !imageHostNodeId) {
+    throw Error('Must provide either imageUrl or imageHostNodeId.');
+  } else if (imageUrl && imageHostNodeId) {
+    throw Error('Provide either imageUrl or imageHostNodeId but not both.');
   } else if (imageHostNodeId && !imageId) {
-    response.sendError(Error('Provide imageId is required with imageHostNodeId.'), res, 400);
+    throw Error('Provide imageId is required with imageHostNodeId.');
   }
+  return Promise.resolve();
 };
 
 module.exports = {
