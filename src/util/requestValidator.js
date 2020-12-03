@@ -1,16 +1,16 @@
 const Promise = require('bluebird');
 
-const checkNewImageParams = (newImage) => {
+const checkNewImageParams = (newImage) => new Promise((resolve, reject) => {
   const { imageHostNodeId, imageUrl, imageId } = newImage;
   if (!imageUrl && !imageHostNodeId) {
-    throw Error('Must provide either imageUrl or imageHostNodeId.');
+    reject(new Error('Must provide either imageUrl or imageHostNodeId.'));
   } else if (imageUrl && imageHostNodeId) {
-    throw Error('Provide either imageUrl or imageHostNodeId but not both.');
+    reject(new Error('Provide either imageUrl or imageHostNodeId but not both.'));
   } else if (imageHostNodeId && !imageId) {
-    throw Error('Provide imageId is required with imageHostNodeId.');
+    reject(new Error('Provide imageId is required with imageHostNodeId.'));
   }
-  return Promise.resolve();
-};
+  return resolve();
+});
 
 module.exports = {
   checkNewImageParams,
