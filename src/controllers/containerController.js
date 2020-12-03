@@ -17,8 +17,7 @@ const postContainer = (req, res) => {
   checkNewImageParams(swagger.params.newContainer)
     .then(() => makeContainerProcessor(context)
       .postContainer(swagger.params.newContainer)
-      .then((data) => response.sendResult({ data }, 201, res))
-      .catch((err) => response.sendError(err, res, 400)))
+      .then((data) => response.sendResult({ data }, 201, res)))
     .catch((err) => response.sendError(err, res, 400));
 };
 
