@@ -6,9 +6,9 @@ const checkNewImageParams = (newImage) => new Promise((resolve, reject) => {
 
   if (!imageUrl && !imageHostNodeId) {
     errorMessage = new Error('Must provide either imageUrl or imageHostNodeId.');
-  } if (imageUrl && imageHostNodeId) {
+  } else if (imageUrl && imageHostNodeId) {
     errorMessage = new Error('Provide either imageUrl or imageHostNodeId but not both.');
-  } if (imageHostNodeId && !imageId) {
+  } else if (imageHostNodeId && !imageId) {
     errorMessage = new Error('Provide imageId is required with imageHostNodeId.');
   }
 
