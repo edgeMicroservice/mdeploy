@@ -1,4 +1,5 @@
 const { rpAuth, SERVICE_CONSTANTS } = require('../lib/auth-helper');
+const { extractFromServiceType } = require('../util/serviceNameHelper');
 
 const makeMcmAPIs = (context) => {
   const { httpPort } = context.info;
@@ -19,14 +20,14 @@ const makeMcmAPIs = (context) => {
     .then(() => id);
 
   const deployContainer = (
-    imageName, containerName, env, accessToken,
+    imageId, containerName, env, accessToken,
   ) => rpAuth(SERVICE_CONSTANTS.MCM, {
     url: `${MCM_URL}/containers`,
     method: 'POST',
     token: `bearer ${accessToken}`,
     body: {
       name: containerName,
-      image: imageName,
+      image: extractFromServiceType(imageId).serviceNameVersion,
       env,
     },
   }, context, true);

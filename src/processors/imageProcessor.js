@@ -17,16 +17,22 @@ const makeImageProcessor = (context) => {
     .then((accessToken) => makeNodesHelper(context)
       .findByAccount(accessToken)
       .then((nodes) => {
-        const targetNode = find(nodes, (node) => node.id === newImage.nodeId);
-        if (!targetNode) throwException('Target node cannot be found', { nodeId: newImage.nodeId });
+        const { imageUrl } = newImage;
 
         const currentNode = find(nodes, (node) => node.id === context.info.nodeId);
         if (!currentNode) throwException('Current node cannot be found', { nodeId: context.info.nodeId });
 
-        debugLog('Found targetNode', targetNode);
         debugLog('Found currentNode', currentNode);
 
         const targetNodeLocalHref = find(currentNode.addresses, (address) => address.type === 'local').url.href;
+
+        if (imageUrl) return { targetNodeLocalHref };
+
+        const targetNode = find(nodes, (node) => node.id === newImage.imageHostNodeId);
+
+        debugLog('Found targetNode', targetNode);
+
+        if (!targetNode) throwException('Target node cannot be found', { nodeId: newImage.imageHostNodeId });
 
         if (currentNode.localLinkNetworkId === targetNode.localLinkNetworkId) {
           return {
@@ -35,7 +41,7 @@ const makeImageProcessor = (context) => {
           };
         }
         return makeBepHelper(context)
-          .getBep(accessToken, newImage.nodeId, context.info.serviceType, BEP_ENDPOINT)
+          .getBep(accessToken, newImage.imageHostNodeId, context.info.serviceType, BEP_ENDPOINT)
           .then((targetNodeUrl) => ({
             targetNodeLocalHref,
             targetNodeHref: targetNodeUrl.href,
@@ -45,7 +51,7 @@ const makeImageProcessor = (context) => {
           });
       })
       .then(({ targetNodeLocalHref, targetNodeHref }) => makeDeploymentHelper(context)
-        .deployImage(newImage.nodeId, targetNodeLocalHref, targetNodeHref, newImage.imageId, accessToken)));
+        .deployImage(newImage.imageHostNodeId, newImage.imageId, newImage.imageUrl, targetNodeLocalHref, targetNodeHref, accessToken)));
 
   const getImages = () => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
