@@ -1,10 +1,19 @@
 ###
 @host = http://localhost:8083
 @imagename = mdeploy
-
+@deleteImageId = cc616330-6906-4dd4-bcac-0fc145233d92-mreport-v1
+@clientId = cc616330-6906-4dd4-bcac-0fc145233d92
 @systemToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyLCJzY29wZSI6InJlYWQ6aW1hZ2VzIGNyZWF0ZTpjb250YWluZXIgY3JlYXRlOmltYWdlIHJlYWQ6Y29udGFpbmVycyJ9.6_AFOIZ8EX82ChTI0NccqbtrvNm9P1H0ZJHy-eoEggY
 ####
 GET {{host}}/mcm/v1/images
+Authorization: bearer {{edgeToken}}
+
+####
+DELETE http://localhost:8083/mcm/v1/images/{{deleteImageId}}
+Authorization: Bearer {{edgeToken}}
+
+####
+GET {{host}}/mcm/v1/containers
 Authorization: bearer {{edgeToken}}
 
 ####
@@ -32,6 +41,7 @@ Authorization: Bearer {{edgeToken}}
     "OAUTH_CLIENT_ID": "--oauth-client-id--",
     "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
     "SESSION_SECURITY_AUTHORIZATION_SET": "off",
+    "SERVER_SECURITY_SET": "off",
     "MST_URL": "http://localhost:8025/mST/v1",
     "CUSTOMER_CODE": "--customer-code--",
     "MDEPLOYMENYAGENT_URL": "ws://",

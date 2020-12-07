@@ -48,17 +48,12 @@ const makeDeploymentHelper = (context) => {
       },
     };
 
-    return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true);
+    return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
+      .then((response) => {
+        if (response.error) throwException('Error occured while generating hmac', response.error);
+        return response.result;
+      });
   };
-
-  // const notifyApp = (messageBody) => {
-  //   const data = {};
-  //   data.type = 'deployImage';
-  //   data.message = JSON.stringify(messageBody);
-  //   context.dispatchWebSocketEvent(data);
-
-  //   return messageBody;
-  // };
 
   const deployImage = (nodeId, imageId, imageUrl, targetNodeLocalHref, targetNodeHref, accessToken) => {
     const { env } = context;
@@ -83,7 +78,6 @@ const makeDeploymentHelper = (context) => {
         },
       };
       return env.MDEPLOYMENYAGENT_URL === 'ws://'
-        // ? notifyApp(options.body)
         ? addRegistryImage(accessToken, nodeId, imageId, hmac)
         : rpAuth('mdeploymentagent', options, context, false);
     };
