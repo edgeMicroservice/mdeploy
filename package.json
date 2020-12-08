@@ -29,11 +29,7 @@
     "router": "1.3.4"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#v1.1.0",
-=======
     "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#f2324e1",
->>>>>>> 699ed6b... EDGEMS-331 added support for addRegistryImage
     "@mimik/swagger-mw-codegen": "bitbucket:mimiktech/swagger-mw-codegen#3b38b36",
     "@mimik/edge-ms-packager": "^1.0.2",
     "@babel/core": "7.8.7",
