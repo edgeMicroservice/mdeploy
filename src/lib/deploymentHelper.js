@@ -2,7 +2,8 @@ const { rpAuth, SERVICE_CONSTANTS } = require('./auth-helper');
 const { throwException } = require('../util/logHelper');
 
 const JSONRPC_VERSION = '2.0';
-const JSONRPC_METHOD = 'getEdgeHmacCode';
+const JSONRPC_METHOD_HMAC = 'getEdgeHmacCode';
+const JSONRPC_METHOD_REGISTRY = 'serviceMesh.addRegistryImage';
 
 const HMAC_EXPIRES_IN = 60; // in seconds
 
@@ -17,7 +18,7 @@ const makeDeploymentHelper = (context) => {
       method: 'POST',
       body: {
         jsonrpc: JSONRPC_VERSION,
-        method: JSONRPC_METHOD,
+        method: JSONRPC_METHOD_HMAC,
         params: [
           accessToken,
           `${(new Date()).getTime() + HMAC_EXPIRES_IN}`,
@@ -33,11 +34,35 @@ const makeDeploymentHelper = (context) => {
       });
   };
 
-  const notifyApp = (messageBody) => {
-    const data = {};
-    data.type = 'deployImage';
-    data.message = JSON.stringify(messageBody);
-    context.dispatchWebSocketEvent(data);
+  const addRegistryImage = (accessToken, hostNodeId, imageId, hmac) => {
+    const options = {
+      url: JSONRPC_URL,
+      method: 'POST',
+      body: {
+        jsonrpc: JSONRPC_VERSION,
+        method: JSONRPC_METHOD_REGISTRY,
+        params: [
+          accessToken,
+          hostNodeId, imageId, hmac,
+        ],
+      },
+    };
+
+    return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
+      .then((response) => {
+        if (response.error) throwException('Error occured while calling addRegistryImage', response.error);
+        return response.result;
+      });
+  };
+
+  const notifyApp = (type, messageBody) => {
+    const { env } = context;
+    if (env.MDEPLOYMENYAGENT_URL === 'ws://') {
+      const data = {};
+      data.type = type;
+      data.message = JSON.stringify(messageBody);
+      context.dispatchWebSocketEvent(data);
+    }
 
     return messageBody;
   };
@@ -65,7 +90,7 @@ const makeDeploymentHelper = (context) => {
         },
       };
       return env.MDEPLOYMENYAGENT_URL === 'ws://'
-        ? notifyApp(options.body)
+        ? addRegistryImage(accessToken, nodeId, imageId, hmac)
         : rpAuth('mdeploymentagent', options, context, false);
     };
 
@@ -82,6 +107,7 @@ const makeDeploymentHelper = (context) => {
 
   return {
     deployImage,
+    notifyApp,
   };
 };
 
