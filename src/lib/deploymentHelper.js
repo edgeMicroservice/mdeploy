@@ -50,7 +50,7 @@ const makeDeploymentHelper = (context) => {
 
     return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
       .then((response) => {
-        if (response.error) throwException('Error occured while generating hmac', response.error);
+        if (response.error) throwException('Error occured while calling addRegistryImage', response.error);
         return response.result;
       });
   };
