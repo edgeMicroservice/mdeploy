@@ -1,6 +1,6 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
 const makeContainerProcessor = require('../processors/containerProcessor');
-const { checkNewImageParams } = require('../util/requestValidator');
+const { checkNewContainerParams } = require('../util/requestValidator');
 
 const getContainers = (req, res) => {
   const { context } = req;
@@ -14,7 +14,7 @@ const getContainers = (req, res) => {
 const postContainer = (req, res) => {
   const { context, swagger } = req;
 
-  checkNewImageParams(swagger.params.newContainer)
+  checkNewContainerParams(swagger.params.newContainer)
     .then(() => makeContainerProcessor(context)
       .postContainer(swagger.params.newContainer)
       .then((data) => response.sendResult({ data }, 201, res)))
