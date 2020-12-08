@@ -55,6 +55,18 @@ const makeDeploymentHelper = (context) => {
       });
   };
 
+  const notifyApp = (type, messageBody) => {
+    const { env } = context;
+    if (env.MDEPLOYMENYAGENT_URL === 'ws://') {
+      const data = {};
+      data.type = type;
+      data.message = JSON.stringify(messageBody);
+      context.dispatchWebSocketEvent(data);
+    }
+
+    return messageBody;
+  };
+
   const deployImage = (nodeId, imageId, imageUrl, targetNodeLocalHref, targetNodeHref, accessToken) => {
     const { env } = context;
     const MCM_URL = `${targetNodeLocalHref}/mcm/v1`;
@@ -95,6 +107,7 @@ const makeDeploymentHelper = (context) => {
 
   return {
     deployImage,
+    notifyApp,
   };
 };
 

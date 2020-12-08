@@ -13,6 +13,10 @@ DELETE http://localhost:8083/mcm/v1/images/{{deleteImageId}}
 Authorization: Bearer {{edgeToken}}
 
 ####
+DELETE http://localhost:8083/mcm/v1/containers/{{deleteImageId}}
+Authorization: Bearer {{edgeToken}}
+
+####
 GET {{host}}/mcm/v1/containers
 Authorization: bearer {{edgeToken}}
 
