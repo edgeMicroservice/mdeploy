@@ -20,7 +20,7 @@ const makeContainerProcessor = (context) => {
       ))
     .then((response) => {
       const { notifyApp } = makeDeploymentHelper(context);
-      notifyApp('container', response);
+      notifyApp('container.post', response);
       return response;
     })
     .catch((error) => {
@@ -39,7 +39,12 @@ const makeContainerProcessor = (context) => {
 
   const deleteContainer = (containerId) => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
-      .undeployContainer(containerId, accessToken));
+      .undeployContainer(containerId, accessToken))
+    .then((response) => {
+      const { notifyApp } = makeDeploymentHelper(context);
+      notifyApp('container.delete', response);
+      return response;
+    });
 
   return {
     getContainers,
