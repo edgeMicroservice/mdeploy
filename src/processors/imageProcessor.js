@@ -1,7 +1,8 @@
 const find = require('lodash/find');
 
-const makeMcmAPIs = require('../lib/mcmAPIs');
+const makeMcmAPIs = require('../external/mcmAPIs');
 const makeNodesHelper = require('../lib/nodesHelper');
+const makeSyncHelper = require('../lib/syncHelper');
 const makeDeploymentHelper = require('../lib/deploymentHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
 const makeBepHelper = require('../lib/bepHelper');
@@ -13,7 +14,9 @@ const fetchToken = (context) => makeTokenSelector(context)
   .selectUserToken();
 
 const makeImageProcessor = (context) => {
-  const postImage = (newImage) => fetchToken(context)
+  const syncHelper = makeSyncHelper(context);
+
+  const updateImage = (newImage) => fetchToken(context)
     .then((accessToken) => makeNodesHelper(context)
       .findByAccount(accessToken)
       .then((nodes) => {
@@ -51,18 +54,27 @@ const makeImageProcessor = (context) => {
           });
       })
       .then(({ targetNodeLocalHref, targetNodeHref }) => makeDeploymentHelper(context)
-        .deployImage(newImage.imageHostNodeId, newImage.imageId, newImage.imageUrl, targetNodeLocalHref, targetNodeHref, accessToken)));
+        .deployImage(newImage.imageHostNodeId, newImage.imageId, newImage.imageUrl, targetNodeLocalHref, targetNodeHref, accessToken)))
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   const getImages = () => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
-      .getCachedImages(accessToken));
+      .getCachedImages(accessToken))
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   const deleteImage = (id) => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
-      .deleteCachedImage(id, accessToken));
+      .deleteCachedImage(id, accessToken))
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   return {
-    postImage,
+    updateImage,
     getImages,
     deleteImage,
   };

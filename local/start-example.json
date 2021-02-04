@@ -4,6 +4,7 @@
   "env": {
     "MCM.BASE_API_PATH": "/mdeploy/v1",
     "MCM.WEBSOCKET_SUPPORT": "true",
+    "IS_LEADER": "yes",
     "OAUTH_GENERIC_KEY": "--oauth-system-generic-public-key--",
     "OAUTH_CLIENT_ID": "--oauth-client-id--",
     "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
