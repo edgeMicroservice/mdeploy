@@ -4,10 +4,13 @@ const merge = require('lodash/merge');
 
 const makeNodesHelper = require('../lib/nodesHelper');
 const makeTokenSelector = require('../lib/tokenSelector');
+const makeSyncHelper = require('../lib/syncHelper');
 const { extractFromServiceType } = require('../util/serviceNameHelper');
 const { rpAuth, getEdgeServiceLinkByNodeId } = require('../lib/auth-helper');
 
 const makeBatchOpsProcessor = (context) => {
+  const syncHelper = makeSyncHelper(context);
+
   const createOperationRequest = (nodeId, serviceType, request, accessToken) => {
     const requestOptions = {
       method: request.method,
@@ -54,7 +57,10 @@ const makeBatchOpsProcessor = (context) => {
           return createOperationRequest(id, serviceType, batchOp.request, accessToken);
         });
         return Promise.all(operationsPromises);
-      }));
+      }))
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   return {
     createBatchOp,

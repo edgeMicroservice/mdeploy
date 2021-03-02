@@ -1,9 +1,12 @@
-const makeTokenSelector = require('../lib/tokenSelector');
 const makeNodesHelper = require('../lib/nodesHelper');
+const makeSyncHelper = require('../lib/syncHelper');
+const makeTokenSelector = require('../lib/tokenSelector');
 
 const { decodePayload } = require('../lib/jwtHelper');
 
 const makeNodeProcessor = (context) => {
+  const syncHelper = makeSyncHelper(context);
+
   const getNodes = () => makeTokenSelector(context).selectUserToken()
     .then((edgeAccessToken) => makeNodesHelper(context).findByAccount(edgeAccessToken)
       .then((nodes) => {
@@ -16,7 +19,10 @@ const makeNodeProcessor = (context) => {
             services: node.services,
           };
         });
-      }));
+      }))
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   return {
     getNodes,

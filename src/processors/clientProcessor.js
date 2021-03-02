@@ -1,16 +1,18 @@
 const Promise = require('bluebird');
 
 const makeClientModel = require('../models/clientModel');
+const makeSyncHelper = require('../lib/syncHelper');
+
 const { throwException } = require('../util/logHelper');
 const { ACTIVATION_TAG, DEACTIVATION_TAG } = require('../lib/common');
 
+
 const makeClientProcessor = (context) => {
-  const updateClientStatus = (status) => {
+  const syncHelper = makeSyncHelper(context);
+
+  const updateClientStatus = (status) => Promise.resolve(() => {
     if (status === ACTIVATION_TAG && (!context.security || !context.security.token)) {
-      return Promise.resolve()
-        .then(() => {
-          throwException('Cannot use endpoint for setting status="active" without edgeAccessToken in the headers');
-        });
+      return throwException('Cannot use endpoint for setting status="active" without edgeAccessToken in the headers');
     }
 
     if (status === ACTIVATION_TAG) {
@@ -29,7 +31,10 @@ const makeClientProcessor = (context) => {
       .then(() => ({
         status: DEACTIVATION_TAG,
       }));
-  };
+  })
+    .finally(() => {
+      syncHelper.syncLeaders();
+    });
 
   const getClientStatus = () => makeClientModel(context)
     .fetchClientTokenData()
@@ -43,6 +48,9 @@ const makeClientProcessor = (context) => {
       return {
         status: DEACTIVATION_TAG,
       };
+    })
+    .finally(() => {
+      syncHelper.syncLeaders();
     });
 
   return {

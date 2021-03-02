@@ -1,22 +1,32 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
 const makeContainerProcessor = require('../processors/containerProcessor');
+
 const { checkNewContainerParams } = require('../util/requestValidator');
+const { fetchRequestOptions } = require('../util/requestUtil');
 
 const getContainers = (req, res) => {
-  const { context } = req;
+  const { context, swagger } = req;
+
+  const { node } = swagger.params;
+  const { env } = context;
+
+  if (node && node !== fetchRequestOptions.self && env.IS_LEADER !== 'yes') {
+    response.sendError(new Error('Can only use node=self on non-leader mdeploys'), res, 400);
+    return;
+  }
 
   makeContainerProcessor(context)
-    .getContainers()
+    .getContainers(node)
     .then((data) => response.sendResult({ data }, 200, res))
     .catch((err) => response.sendError(err, res, 400));
 };
 
-const postContainer = (req, res) => {
+const updateContainer = (req, res) => {
   const { context, swagger } = req;
 
   checkNewContainerParams(swagger.params.newContainer)
     .then(() => makeContainerProcessor(context)
-      .postContainer(swagger.params.newContainer)
+      .updateContainer(swagger.params.newContainer)
       .then((data) => response.sendResult({ data }, 201, res)))
     .catch((err) => response.sendError(err, res, 400));
 };
@@ -32,6 +42,6 @@ const deleteContainer = (req, res) => {
 
 module.exports = {
   getContainers,
-  postContainer,
+  updateContainer,
   deleteContainer,
 };
