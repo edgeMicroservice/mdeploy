@@ -1,4 +1,5 @@
 const response = require('@mimik/edge-ms-helper/response-helper');
+
 const { getHealthCheckInfo } = require('../processors/systemProcessor');
 
 function getHealthCheck(req, res) {

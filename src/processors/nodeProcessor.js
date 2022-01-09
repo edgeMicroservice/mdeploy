@@ -20,9 +20,7 @@ const makeNodeProcessor = (context) => {
           };
         });
       }))
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   return {
     getNodes,

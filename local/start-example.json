@@ -9,6 +9,7 @@
     "OAUTH_CLIENT_ID": "--oauth-client-id--",
     "OAUTH_CLIENT_SECRET": "--oauth-client-secret--",
     "SERVER_SECURITY_SET": "off",
+    "SERVER_API_KEYS": "--apiKeys-comma-separated--",
     "SESSION_SECURITY_AUTHORIZATION_SET": "on",
     "MST_URL": "http://localhost:8025/mST/v1",
     "CUSTOMER_CODE": "--customer-code--",

@@ -10,31 +10,30 @@ const { ACTIVATION_TAG, DEACTIVATION_TAG } = require('../lib/common');
 const makeClientProcessor = (context) => {
   const syncHelper = makeSyncHelper(context);
 
-  const updateClientStatus = (status) => Promise.resolve(() => {
-    if (status === ACTIVATION_TAG && (!context.security || !context.security.token)) {
-      return throwException('Cannot use endpoint for setting status="active" without edgeAccessToken in the headers');
-    }
+  const updateClientStatus = (status) => Promise.resolve()
+    .then(() => {
+      if (status === ACTIVATION_TAG && (!context.security || !context.security.token)) {
+        return throwException('Cannot use endpoint for setting status="active" without edgeAccessToken in the headers');
+      }
 
-    if (status === ACTIVATION_TAG) {
-      const { jwt, payload } = context.security.token;
-      const expiresAt = payload.exp * 1000; // Compare to Date.now() needs milliseconds.
+      if (status === ACTIVATION_TAG) {
+        const { jwt, payload } = context.security.token;
+        const expiresAt = payload.exp * 1000; // Compare to Date.now() needs milliseconds.
 
+        return makeClientModel(context)
+          .saveClientToken(jwt, expiresAt)
+          .then(() => ({
+            status: ACTIVATION_TAG,
+            inactiveAfter: expiresAt,
+          }));
+      }
       return makeClientModel(context)
-        .saveClientToken(jwt, expiresAt)
+        .deleteClientToken()
         .then(() => ({
-          status: ACTIVATION_TAG,
-          inactiveAfter: expiresAt,
+          status: DEACTIVATION_TAG,
         }));
-    }
-    return makeClientModel(context)
-      .deleteClientToken()
-      .then(() => ({
-        status: DEACTIVATION_TAG,
-      }));
-  })
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    })
+    .finally(syncHelper.syncLeaders);
 
   const getClientStatus = () => makeClientModel(context)
     .fetchClientTokenData()
@@ -49,9 +48,7 @@ const makeClientProcessor = (context) => {
         status: DEACTIVATION_TAG,
       };
     })
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   return {
     getClientStatus,
