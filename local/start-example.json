@@ -13,7 +13,8 @@
     "SESSION_SECURITY_AUTHORIZATION_SET": "on",
     "MST_URL": "http://localhost:8025/mST/v1",
     "CUSTOMER_CODE": "--customer-code--",
-    "MDEPLOYMENYAGENT_URL": "http://localhost:8084/mdeploymentagent/v1",
+    "MDEPLOYMENTAGENT_URL": "http://localhost:8084/mdeploymentagent/v1",
+    "MDEPLOYMENTAGENT_KEY": "", 
     "SESSION_KEYS_MAP": "[{\"sessionId\": \"--random-16-chars-(alpha-numberic-only)--\",\"sessionSecret\": \"--random-32-chars-(alpha-numberic-only)--\",\"projectId\": \"common\"}]"
   }
 }

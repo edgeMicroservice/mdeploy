@@ -4,7 +4,6 @@ const {
   map,
   find,
   some,
-  every,
 } = require('lodash');
 
 const makeNotifier = require('./notifier');
@@ -71,10 +70,8 @@ const makeSyncHelper = (context) => {
 
             if (manualSync) isSame = false;
             if (newContainer) isSame = false;
-            if (isSame && newContainersData.length !== existingContainersData.length) isSame = false;
-            if (isSame) {
-              isSame = every(newContainersData, (newCont) => some(existingContainersData, (extCont) => newCont.id === extCont.id));
-            }
+
+            if (isSame && JSON.stringify(newContainersData) !== JSON.stringify(existingContainersData)) isSame = false;
 
             if (isSame) return Promise.resolve(existingContainersData);
 

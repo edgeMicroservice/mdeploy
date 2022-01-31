@@ -27,8 +27,15 @@ const makeBepHelper = (context) => {
 
       return getEdgeServiceLinkByNodeId(nodeId, serviceType, accessToken, context)
         .then((serviceLink) => {
+          const { env: { SERVER_API_KEYS } } = context;
+
           const updatedRequestOptions = merge(requestOptions, serviceLink);
           updatedRequestOptions.url = `${updatedRequestOptions.url}${endpoint}`;
+
+          if (SERVER_API_KEYS && SERVER_API_KEYS !== '') {
+            [updatedRequestOptions.apiKey] = SERVER_API_KEYS.split(',');
+          }
+
           const { serviceName } = extractFromServiceType(serviceType);
           return rpAuth(serviceName, updatedRequestOptions, context, true);
         });

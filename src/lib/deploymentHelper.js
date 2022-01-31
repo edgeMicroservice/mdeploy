@@ -27,6 +27,7 @@ const makeDeploymentHelper = (context) => {
         ],
       },
     };
+
     return rpAuth(SERVICE_CONSTANTS.MCM, options, context, true)
       .then((response) => {
         if (response.error) throwException('Error occured while generating hmac', response.error);
@@ -57,7 +58,7 @@ const makeDeploymentHelper = (context) => {
 
   const notifyApp = (type, messageBody) => {
     const { env } = context;
-    if (env.MDEPLOYMENYAGENT_URL === 'ws://') {
+    if (env.MDEPLOYMENTAGENT_URL === 'ws://') {
       const data = {};
       data.type = type;
       data.message = JSON.stringify(messageBody);
@@ -70,26 +71,34 @@ const makeDeploymentHelper = (context) => {
   const deployImage = (nodeId, imageId, imageUrl, targetNodeLocalHref, targetNodeHref, accessToken) => {
     const { env } = context;
     const MCM_URL = `${targetNodeLocalHref}/mcm/v1`;
+    const { MDEPLOYMENTAGENT_KEY } = env;
 
     const callDeploymentAgent = (hmac) => {
       const options = {
-        url: `${env.MDEPLOYMENYAGENT_URL}/images`,
+        url: `${env.MDEPLOYMENTAGENT_URL}/files`,
         method: 'POST',
+        headers: {
+          apiKey: MDEPLOYMENTAGENT_KEY,
+        },
         body: {
-          imageLink: {
+          originLink: {
             url: imageUrl || `${targetNodeHref}/mcm/v1/images/${imageId}/tarball?hmac=${hmac}`,
             method: 'GET',
           },
-          deploymentLink: {
+          destinationLink: {
             url: `${MCM_URL}/images`,
             method: 'POST',
             headers: {
               Authorization: `bearer ${accessToken}`,
             },
+            formData: {
+              image: '$file.stream',
+            },
           },
         },
       };
-      return env.MDEPLOYMENYAGENT_URL === 'ws://'
+
+      return env.MDEPLOYMENTAGENT_URL === 'ws://'
         ? addRegistryImage(accessToken, nodeId, imageId, hmac)
         : rpAuth('mdeploymentagent', options, context, false);
     };

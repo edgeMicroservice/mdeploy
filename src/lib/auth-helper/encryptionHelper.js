@@ -15,7 +15,7 @@ const encrypt = (text, keyId, keySecret) => {
     encrypted = Buffer.concat([encrypted, cipher.final()]);
     return encrypted.toString('hex');
   } catch (error) {
-    throwException('Error occured while encryting edgeSessionInteraction', error);
+    throwException('Error occured while encrypting edgeSessionInteraction', error);
   }
   return null;
 };

@@ -78,14 +78,18 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
 
   const updatedOptions = options;
 
+  if (!updatedOptions.apiKey && updatedOptions.headers) updatedOptions.apiKey = updatedOptions.headers.apiKey;
+
   return (() => {
+    if (updatedOptions.apiKey && updatedOptions.apiKey !== '') return Promise.resolve({ apiKey: updatedOptions.apiKey });
+
     if (!updatedOptions.token && serviceType !== SERVICE_CONSTANTS.MCM && context.env.SERVER_SECURITY_SET === 'on') {
       const { serviceType: currentServiceType } = context.info;
       const { serviceName: currentServiceName } = extractFromServiceType(currentServiceType);
 
       if (serviceType === currentServiceName) {
         const { SERVER_API_KEYS } = context.env;
-        if (SERVER_API_KEYS !== '') return Promise.resolve({ apiKey: SERVER_API_KEYS });
+        if (SERVER_API_KEYS !== '') return Promise.resolve({ apiKey: SERVER_API_KEYS.split(',')[0] });
       }
 
       return fetchTokenFromMST(serviceType, context)
@@ -106,10 +110,10 @@ const rpAuth = (serviceObj, options, context, encryptRequest = true) => {
       if (apiKey) updatedOptions.headers = { apiKey, ...updatedOptions.headers = {} };
 
       if (context.env.SESSION_SECURITY_AUTHORIZATION_SET === 'off'
-        || !encryptRequest
-        || serviceType === SERVICE_CONSTANTS.MCM
-        || (options.headers && options.headers['x-mimik-routing'])) {
-        if (serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
+          || !encryptRequest
+          || serviceType === SERVICE_CONSTANTS.MCM
+          || (options.headers && options.headers['x-mimik-routing'])) {
+        if (!apiKey && serviceType !== SERVICE_CONSTANTS.MCM && tokenResult.error) {
           throwException(`cannot fetch mST token for serviceType: ${serviceType}`, {
             error: tokenResult.error.message,
             SERVER_SECURITY_SET: context.env.SERVER_SECURITY_SET,
