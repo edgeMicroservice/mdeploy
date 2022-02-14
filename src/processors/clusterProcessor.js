@@ -24,9 +24,7 @@ const makeClusterProcessor = (context) => {
 
     return Promise.map(nodeIds, (nodeId) => leaderModel.updateContainersByNode(nodeId, nodeContainersMap[nodeId]))
       .then(() => containersUpdate)
-      .finally(() => {
-        syncHelper.syncLeaders();
-      });
+      .finally(syncHelper.syncLeaders);
   };
 
   return {

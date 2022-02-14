@@ -3,7 +3,7 @@ const { merge, values, some } = require('lodash');
 
 const makeNodesHelper = require('../lib/nodesHelper');
 
-const makeClientModel = require('../models/clientModel');
+const makeTokenSelector = require('../lib/tokenSelector');
 const makeLeaderModel = require('../models/leaderModel');
 
 const { decodePayload } = require('./jwtHelper');
@@ -22,7 +22,7 @@ const makeNotifier = (context) => {
   const fetchToken = () => {
     if (savedAccessToken) return Promise.resolve(savedAccessToken);
 
-    return makeClientModel(context).selectUserToken()
+    return makeTokenSelector(context).selectUserToken()
       .then((accessToken) => {
         savedAccessToken = accessToken;
         return accessToken;

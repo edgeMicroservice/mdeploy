@@ -7,16 +7,12 @@ const makeLeaderProcessor = (context) => {
   const syncHelper = makeSyncHelper(context);
 
   const getLeaders = () => leaderModel.fetchLeaders()
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   const updateLeaders = (leaderUpdate) => leaderModel.addLeader(leaderUpdate)
-    .then(() => leaderUpdate)
-    .finally(() => {
-      syncHelper.syncContainers(undefined, true);
-      syncHelper.syncLeaders();
-    });
+    .then(syncHelper.syncLeaders)
+    .then(syncHelper.syncContainers(undefined, true))
+    .then(() => leaderUpdate);
 
   return {
     getLeaders,

@@ -21,7 +21,7 @@ const updateLeaders = (req, res) => {
   const { leaderUpdate } = swagger.params;
 
   return makeLeaderProcessor(context)
-    .updateClientStatus(leaderUpdate)
+    .updateLeaders(leaderUpdate)
     .then((data) => {
       response.sendResult({ data }, 200, res);
     })

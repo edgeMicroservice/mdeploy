@@ -4,23 +4,22 @@ const {
   map,
   find,
   some,
-  every,
 } = require('lodash');
 
 const makeNotifier = require('./notifier');
 const makeNodesHelper = require('./nodesHelper');
 const makeMcmAPIs = require('../external/mcmAPIs');
 const makeTokenSelector = require('../lib/tokenSelector');
-const makeClientModel = require('../models/clientModel');
 const makeClusterModel = require('../models/clusterModel');
 const makeContainerModel = require('../models/containerModel');
-
 
 const { decodePayload } = require('../lib/jwtHelper');
 
 const makeSyncHelper = (context) => {
+  const isLeader = context.env.IS_LEADER === 'yes';
+
   const nodesHelper = makeNodesHelper(context);
-  const clientModel = makeClientModel(context);
+  const tokenSelector = makeTokenSelector(context);
   const clusterModel = makeClusterModel(context);
   const containerModel = makeContainerModel(context);
 
@@ -37,54 +36,60 @@ const makeSyncHelper = (context) => {
     });
   };
 
-  const syncLeaders = () => Promise.all([
-    clientModel.selectUserToken()
-      .then((accessToken) => nodesHelper.findByAccount(accessToken))
-      .then(createClusterInfo),
-    clusterModel.fetchCluster(),
-  ])
-    .then((newCluster, existingCluster) => {
-      if (JSON.stringify(newCluster) === JSON.stringify(existingCluster)) return Promise.resolve();
+  const syncLeaders = () => {
+    if (!isLeader) return Promise.resolve();
 
-      return clusterModel.persistCluster(newCluster)
-        .then((makeNotifier(context).notifyNonLeadersAboutLeader(newCluster)));
-    });
+    return Promise.all([
+      tokenSelector.selectUserToken()
+        .then((accessToken) => nodesHelper.findByAccount(accessToken))
+        .then(createClusterInfo),
+      clusterModel.fetchCluster(),
+    ])
+      .then(([newCluster, existingCluster]) => {
+        if (JSON.stringify(newCluster) === JSON.stringify(existingCluster)) return Promise.resolve();
 
-  const syncContainers = (newContainer, manualSync) => makeTokenSelector(context)
-    .selectUserToken()
-    .then((accessToken) => {
-      const currentNodeId = decodePayload(accessToken).node_id;
+        return clusterModel.persistCluster(newCluster)
+          .then(() => (makeNotifier(context).notifyNonLeadersAboutLeader(newCluster)));
+      });
+  };
 
-      return Promise.all([
-        makeMcmAPIs(context).getDeployedContainers(accessToken),
-        containerModel.fetchContainersByNode(currentNodeId),
-      ])
-        .then(([newContainersData, existingContainersData]) => {
-          let isSame = true;
+  const syncContainers = (newContainer, manualSync) => {
+    if (isLeader) return Promise.resolve();
 
-          if (manualSync) isSame = false;
-          if (newContainer) isSame = false;
-          if (isSame && newContainersData.length !== existingContainersData.length) isSame = false;
-          if (isSame) {
-            isSame = every(newContainersData, (newCont) => some(existingContainersData, (extCont) => newCont.id === extCont.id));
-          }
+    return tokenSelector
+      .selectUserToken()
+      .then((accessToken) => {
+        const currentNodeId = decodePayload(accessToken).node_id;
 
-          if (isSame) return Promise.resolve(existingContainersData);
+        return Promise.all([
+          makeMcmAPIs(context).getDeployedContainers(accessToken),
+          containerModel.fetchContainersByNode(currentNodeId),
+        ])
+          .then(([newContainersData, existingContainersData]) => {
+            let isSame = true;
 
-          const updatedContainersData = map(newContainersData, (newCont) => {
-            if (newContainer && newCont.id === newContainer.id) {
-              return { ...newCont, ...newContainer };
-            }
+            if (manualSync) isSame = false;
+            if (newContainer) isSame = false;
 
-            const foundCont = find(existingContainersData, (extCont) => extCont.id === newCont.id) || {};
+            if (isSame && JSON.stringify(newContainersData) !== JSON.stringify(existingContainersData)) isSame = false;
 
-            return { ...newCont, ...foundCont };
+            if (isSame) return Promise.resolve(existingContainersData);
+
+            const updatedContainersData = map(newContainersData, (newCont) => {
+              if (newContainer && newCont.id === newContainer.id) {
+                return { ...newCont, ...newContainer };
+              }
+
+              const foundCont = find(existingContainersData, (extCont) => extCont.id === newCont.id) || {};
+
+              return { ...newCont, ...foundCont };
+            });
+
+            return containerModel.updateContainersByNode(currentNodeId, updatedContainersData)
+              .then(() => makeNotifier(context).notifyLeadersAboutContainers(updatedContainersData));
           });
-
-          return containerModel.updateContainersByNode(currentNodeId, updatedContainersData)
-            .then(() => makeNotifier(context).notifyLeadersAboutContainers(updatedContainersData));
-        });
-    });
+      });
+  };
 
   return {
     syncLeaders,

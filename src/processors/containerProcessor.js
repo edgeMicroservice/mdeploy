@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const makeImageProcessor = require('./imageProcessor');
 
 const makeMcmAPIs = require('../external/mcmAPIs');
@@ -10,10 +12,9 @@ const makeContainerModel = require('../models/containerModel');
 const { debugLog } = require('../util/logHelper');
 const { fetchRequestOptions } = require('../util/requestUtil');
 
-const fetchToken = (context) => makeTokenSelector(context)
-  .selectUserToken();
-
 const makeContainerProcessor = (context) => {
+  const fetchToken = () => makeTokenSelector(context).selectUserToken();
+
   const mcmAPIs = makeMcmAPIs(context);
   const syncHelper = makeSyncHelper(context);
 
@@ -21,23 +22,21 @@ const makeContainerProcessor = (context) => {
     .then(() => {
       const containerModel = makeContainerModel(context);
 
-      if (!node) containerModel.fetchContainersByNode(context.info.node_id);
-
       switch (node) {
-        case fetchRequestOptions.all:
-          return containerModel.fetchAllContainers();
+        case undefined:
         case fetchRequestOptions.self:
-          return containerModel.fetchContainersByNode(context.info.node_id);
+        case context.info.node_id:
+          return fetchToken().then((accessToken) => mcmAPIs.getDeployedContainers(accessToken));
+        case fetchRequestOptions.all:
+          return fetchToken().then((accessToken) => Promise.all([mcmAPIs.getDeployedContainers(accessToken), containerModel.fetchAllContainers()]))
+            .then(([selfContainers, allOtherContainers]) => [...selfContainers, ...allOtherContainers]);
         default:
           return containerModel.fetchContainersByNode(node);
       }
     })
-    .finally(() => {
-      syncHelper.syncContainers();
-      syncHelper.syncLeaders();
-    });
+    .finally(() => Promise.all([syncHelper.syncContainers, syncHelper.syncLeaders]));
 
-  const updateContainer = (containerRequest, triedDeployingImage = false) => fetchToken(context)
+  const updateContainer = (containerRequest, triedDeployingImage = false) => fetchToken()
     .then((accessToken) => mcmAPIs
       .deployContainer(
         containerRequest.imageId, containerRequest.name, containerRequest.env, accessToken,
@@ -60,26 +59,18 @@ const makeContainerProcessor = (context) => {
       }
       throw error;
     })
-    .then((newContainer) => {
-      syncHelper.syncContainers(newContainer);
-      return newContainer;
-    })
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .then((newContainer) => Promise.all([() => syncHelper.syncContainers(newContainer), syncHelper.syncLeaders])
+      .then(() => newContainer));
 
-  const deleteContainer = (containerId) => fetchToken(context)
+  const deleteContainer = (containerId) => fetchToken()
     .then((accessToken) => mcmAPIs
       .undeployContainer(containerId, accessToken))
     .then((response) => {
       const { notifyApp } = makeDeploymentHelper(context);
       notifyApp('container.delete', response);
-      return response;
+      return containerId;
     })
-    .finally(() => {
-      syncHelper.syncContainers();
-      syncHelper.syncLeaders();
-    });
+    .finally(() => Promise.all([syncHelper.syncContainers(undefined, true), syncHelper.syncLeaders]));
 
   return {
     getContainers,

@@ -55,23 +55,17 @@ const makeImageProcessor = (context) => {
       })
       .then(({ targetNodeLocalHref, targetNodeHref }) => makeDeploymentHelper(context)
         .deployImage(newImage.imageHostNodeId, newImage.imageId, newImage.imageUrl, targetNodeLocalHref, targetNodeHref, accessToken)))
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   const getImages = () => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
       .getCachedImages(accessToken))
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   const deleteImage = (id) => fetchToken(context)
     .then((accessToken) => makeMcmAPIs(context)
       .deleteCachedImage(id, accessToken))
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   return {
     updateImage,

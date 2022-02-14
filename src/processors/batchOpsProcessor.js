@@ -58,9 +58,7 @@ const makeBatchOpsProcessor = (context) => {
         });
         return Promise.all(operationsPromises);
       }))
-    .finally(() => {
-      syncHelper.syncLeaders();
-    });
+    .finally(syncHelper.syncLeaders);
 
   return {
     createBatchOp,
