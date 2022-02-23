@@ -1,6 +1,10 @@
 const Promise = require('bluebird');
 
-const { concat } = require('lodash');
+const {
+  map,
+  concat,
+  filter,
+} = require('lodash');
 
 /**
  * Container Model Schema
@@ -12,6 +16,7 @@ const { concat } = require('lodash');
  * ]
  */
 
+const SELF_NODE = 'self';
 const STORAGE_TAG = 'nodes/containers';
 const getStorageId = (nodeId) => `/nodes/${nodeId}/containers`;
 
@@ -45,9 +50,38 @@ const makeLeaderModel = (context) => {
 
   const deleteContainersByNode = (nodeId) => persistContainers(nodeId, []);
 
+  const fetchSelfContainers = () => fetchContainersByNode(SELF_NODE);
+
+  const updateSelfContainer = (containerId, updatedContainer) => fetchContainersByNode(SELF_NODE)
+    .then((containers) => {
+      let isUpdated;
+
+      const updatedContainers = map(containers, (container) => {
+        if (container.id === containerId) {
+          isUpdated = true;
+          return updatedContainer;
+        }
+        return container;
+      });
+
+      if (!isUpdated) updatedContainers.push(updatedContainer);
+
+      return persistContainers(SELF_NODE, updatedContainers);
+    });
+
+  const deleteSelfContainer = (containerId) => fetchContainersByNode(SELF_NODE)
+    .then((containers) => {
+      const updatedContainers = filter(containers, (container) => container.id !== containerId);
+
+      return persistContainers(SELF_NODE, updatedContainers);
+    });
+
 
   return {
     fetchAllContainers,
+    fetchSelfContainers,
+    updateSelfContainer,
+    deleteSelfContainer,
     fetchContainersByNode,
     updateContainersByNode,
     deleteContainersByNode,

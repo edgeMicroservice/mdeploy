@@ -2,18 +2,14 @@ const Promise = require('bluebird');
 
 const {
   map,
-  find,
   some,
 } = require('lodash');
 
 const makeNotifier = require('./notifier');
 const makeNodesHelper = require('./nodesHelper');
-const makeMcmAPIs = require('../external/mcmAPIs');
 const makeTokenSelector = require('../lib/tokenSelector');
 const makeClusterModel = require('../models/clusterModel');
 const makeContainerModel = require('../models/containerModel');
-
-const { decodePayload } = require('../lib/jwtHelper');
 
 const makeSyncHelper = (context) => {
   const isLeader = context.env.IS_LEADER === 'yes';
@@ -53,42 +49,11 @@ const makeSyncHelper = (context) => {
       });
   };
 
-  const syncContainers = (newContainer, manualSync) => {
+  const syncContainers = () => {
     if (isLeader) return Promise.resolve();
 
-    return tokenSelector
-      .selectUserToken()
-      .then((accessToken) => {
-        const currentNodeId = decodePayload(accessToken).node_id;
-
-        return Promise.all([
-          makeMcmAPIs(context).getDeployedContainers(accessToken),
-          containerModel.fetchContainersByNode(currentNodeId),
-        ])
-          .then(([newContainersData, existingContainersData]) => {
-            let isSame = true;
-
-            if (manualSync) isSame = false;
-            if (newContainer) isSame = false;
-
-            if (isSame && JSON.stringify(newContainersData) !== JSON.stringify(existingContainersData)) isSame = false;
-
-            if (isSame) return Promise.resolve(existingContainersData);
-
-            const updatedContainersData = map(newContainersData, (newCont) => {
-              if (newContainer && newCont.id === newContainer.id) {
-                return { ...newCont, ...newContainer };
-              }
-
-              const foundCont = find(existingContainersData, (extCont) => extCont.id === newCont.id) || {};
-
-              return { ...newCont, ...foundCont };
-            });
-
-            return containerModel.updateContainersByNode(currentNodeId, updatedContainersData)
-              .then(() => makeNotifier(context).notifyLeadersAboutContainers(updatedContainersData));
-          });
-      });
+    return containerModel.fetchSelfContainers()
+      .then((containers) => makeNotifier(context).notifyLeadersAboutContainers(containers));
   };
 
   return {

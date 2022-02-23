@@ -11,7 +11,7 @@ const makeLeaderProcessor = (context) => {
 
   const updateLeaders = (leaderUpdate) => leaderModel.addLeader(leaderUpdate)
     .then(syncHelper.syncLeaders)
-    .then(syncHelper.syncContainers(undefined, true))
+    .then(syncHelper.syncContainers)
     .then(() => leaderUpdate);
 
   return {
