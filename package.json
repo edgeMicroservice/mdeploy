@@ -1,6 +1,6 @@
 {
   "name": "mdeploy",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "",
   "author": "mimik technology inc <support@mimik.com> (https://developer.mimik.com/)",
   "license": "MIT",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "swagger-mdeploy": "bitbucket:mimiktech/swagger-mdeploy#v1.2.0_1",
-    "@mimik/swagger-mw-codegen": "bitbucket:mimiktech/swagger-mw-codegen#3b38b36",
+    "@mimik/swagger-mw-codegen": "1.4.6",
     "@mimik/edge-ms-packager": "^1.0.2",
     "@babel/core": "7.8.7",
     "@babel/preset-env": "7.8.7",

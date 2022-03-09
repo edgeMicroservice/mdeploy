@@ -20,6 +20,10 @@ const makeClientProcessor = (context) => {
         const { jwt, payload } = context.security.token;
         const expiresAt = payload.exp * 1000; // Compare to Date.now() needs milliseconds.
 
+        if (context.info.nodeId !== payload.node_id) {
+          return throwException('Incorrect token: wrong nodeId');
+        }
+
         return makeClientModel(context)
           .saveClientToken(jwt, expiresAt)
           .then(() => ({
