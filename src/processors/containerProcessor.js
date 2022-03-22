@@ -17,16 +17,15 @@ const makeContainerProcessor = (context) => {
 
   const mcmAPIs = makeMcmAPIs(context);
   const syncHelper = makeSyncHelper(context);
+  const containerModel = makeContainerModel(context);
 
   const getContainers = (node) => Promise.resolve()
     .then(() => {
-      const containerModel = makeContainerModel(context);
-
       switch (node) {
         case undefined:
         case fetchRequestOptions.self:
         case context.info.node_id:
-          return fetchToken().then((accessToken) => mcmAPIs.getDeployedContainers(accessToken));
+          return containerModel.fetchSelfContainers();
         case fetchRequestOptions.all:
           return fetchToken().then((accessToken) => Promise.all([mcmAPIs.getDeployedContainers(accessToken), containerModel.fetchAllContainers()]))
             .then(([selfContainers, allOtherContainers]) => [...selfContainers, ...allOtherContainers]);
@@ -34,7 +33,7 @@ const makeContainerProcessor = (context) => {
           return containerModel.fetchContainersByNode(node);
       }
     })
-    .finally(() => Promise.all([syncHelper.syncContainers, syncHelper.syncLeaders]));
+    .finally(syncHelper.syncLeaders);
 
   const updateContainer = (containerRequest, triedDeployingImage = false) => fetchToken()
     .then((accessToken) => mcmAPIs
@@ -59,8 +58,14 @@ const makeContainerProcessor = (context) => {
       }
       throw error;
     })
-    .then((newContainer) => Promise.all([() => syncHelper.syncContainers(newContainer), syncHelper.syncLeaders])
-      .then(() => newContainer));
+    .then((newContainer) => {
+      const { labels = {}, metadata = {} } = containerRequest;
+      const updatedNewContainer = { ...newContainer, labels, metadata };
+
+      return containerModel.updateSelfContainer(newContainer.id, updatedNewContainer)
+        .then(() => Promise.all([syncHelper.syncContainers, syncHelper.syncLeaders]))
+        .then(() => updatedNewContainer);
+    });
 
   const deleteContainer = (containerId) => fetchToken()
     .then((accessToken) => mcmAPIs
@@ -68,9 +73,11 @@ const makeContainerProcessor = (context) => {
     .then((response) => {
       const { notifyApp } = makeDeploymentHelper(context);
       notifyApp('container.delete', response);
-      return containerId;
+
+      return containerModel.deleteSelfContainer(containerId)
+        .then(() => containerId);
     })
-    .finally(() => Promise.all([syncHelper.syncContainers(undefined, true), syncHelper.syncLeaders]));
+    .finally(() => Promise.all([syncHelper.syncContainers, syncHelper.syncLeaders]));
 
   return {
     getContainers,
